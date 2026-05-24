@@ -1,9 +1,9 @@
-import { useAuth } from '../AuthContext';
+import { useCognitoAuth } from '../CognitoAuthContext';
 import { useNavigate } from 'react-router-dom';
 import '../styles/components/Layout.css';
 
 export default function Layout({ children }) {
-  const { user, logout } = useAuth();
+  const { user, logout } = useCognitoAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {

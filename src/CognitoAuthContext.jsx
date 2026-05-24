@@ -16,10 +16,11 @@ export function CognitoAuthProvider({ children }) {
     try {
       const token = localStorage.getItem('id_token');
       if (token) {
-        // Parse JWT to extract user info
         const payload = JSON.parse(atob(token.split('.')[1]));
         setUser({
           email: payload.email || localStorage.getItem('user_email'),
+          first_name: payload.given_name || localStorage.getItem('user_first_name'),
+          last_name: payload.family_name || localStorage.getItem('user_last_name'),
           role: payload['custom:role'] || localStorage.getItem('user_role') || 'patient',
           id_token: token,
           access_token: localStorage.getItem('access_token'),
@@ -58,15 +59,18 @@ export function CognitoAuthProvider({ children }) {
 
       const data = await response.json();
 
-      // Store tokens
       localStorage.setItem('id_token', data.id_token);
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('refresh_token', data.refresh_token);
       localStorage.setItem('user_email', data.user.email);
+      localStorage.setItem('user_first_name', data.user.first_name);
+      localStorage.setItem('user_last_name', data.user.last_name);
       localStorage.setItem('user_role', data.user.role);
 
       setUser({
         email: data.user.email,
+        first_name: data.user.first_name,
+        last_name: data.user.last_name,
         role: data.user.role,
         id_token: data.id_token,
         access_token: data.access_token,
@@ -95,15 +99,18 @@ export function CognitoAuthProvider({ children }) {
 
       const data = await response.json();
 
-      // Store tokens
       localStorage.setItem('id_token', data.id_token);
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('refresh_token', data.refresh_token);
       localStorage.setItem('user_email', data.user.email);
+      localStorage.setItem('user_first_name', data.user.first_name);
+      localStorage.setItem('user_last_name', data.user.last_name);
       localStorage.setItem('user_role', data.user.role);
 
       setUser({
         email: data.user.email,
+        first_name: data.user.first_name,
+        last_name: data.user.last_name,
         role: data.user.role,
         id_token: data.id_token,
         access_token: data.access_token,
@@ -114,6 +121,8 @@ export function CognitoAuthProvider({ children }) {
         success: true,
         user: {
           email: data.user.email,
+          first_name: data.user.first_name,
+          last_name: data.user.last_name,
           role: data.user.role,
         },
       };
@@ -128,12 +137,16 @@ export function CognitoAuthProvider({ children }) {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_email');
+    localStorage.removeItem('user_first_name');
+    localStorage.removeItem('user_last_name');
     localStorage.removeItem('user_role');
     setUser(null);
   };
 
+  const logout = signOut;
+
   return (
-    <AuthContext.Provider value={{ user, loading, error, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, error, signUp, signIn, signOut, logout }}>
       {children}
     </AuthContext.Provider>
   );
