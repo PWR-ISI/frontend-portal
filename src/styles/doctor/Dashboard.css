@@ -1,0 +1,87 @@
+.doctor-dashboard {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-header {
+  background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+  color: white;
+  padding: 30px;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.today-appointments,
+.upcoming-appointments,
+.schedule-section {
+  padding: 30px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.today-appointments:last-child,
+.upcoming-appointments:last-child,
+.schedule-section:last-child {
+  border-bottom: none;
+}
+
+.schedule-section h2 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.schedule-slot {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 15px;
+  text-align: center;
+}
+
+.slot-day {
+  display: block;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.slot-time {
+  display: block;
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.slot-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.slot-status.available {
+  background: #d4edda;
+  color: #155724;
+}
+
+.slot-status.booked {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+@media (max-width: 768px) {
+  .schedule-grid {
+    grid-template-columns: 1fr;
+  }
+}
