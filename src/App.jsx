@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './AuthContext';
+import { CognitoAuthProvider, useCognitoAuth } from './CognitoAuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import PatientDashboard from './pages/patient/Dashboard';
@@ -10,7 +10,7 @@ import Layout from './components/Layout';
 import './App.css';
 
 function ProtectedRoute({ children, requiredRole }) {
-  const { user, loading } = useAuth();
+  const { user, loading } = useCognitoAuth();
 
   if (loading) {
     return <div>Loading...</div>;
@@ -28,7 +28,7 @@ function ProtectedRoute({ children, requiredRole }) {
 }
 
 function AppRoutes() {
-  const { user } = useAuth();
+  const { user } = useCognitoAuth();
 
   return (
     <Routes>
@@ -110,9 +110,9 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
+      <CognitoAuthProvider>
         <AppRoutes />
-      </AuthProvider>
+      </CognitoAuthProvider>
     </BrowserRouter>
   );
 }

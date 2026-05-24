@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authAPI, getTokenRole } from '../api';
-import { useAuth } from '../AuthContext';
+import { useCognitoAuth } from '../CognitoAuthContext';
 import '../styles/Login.css';
 
 export default function Login() {
@@ -10,7 +9,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { signIn } = useCognitoAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,13 +17,12 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await authAPI.login(email, password);
-      const { token, user } = response.data;
-
-      login(token, user.role);
-      navigate(`/${user.role.toLowerCase()}/dashboard`);
+      const result = await signIn(email, password);
+      if (result.success) {
+        navigate(`/${result.user.role.toLowerCase()}/dashboard`);
+      }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed');
+      setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }

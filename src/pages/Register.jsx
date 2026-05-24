@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authAPI } from '../api';
-import { useAuth } from '../AuthContext';
+import { useCognitoAuth } from '../CognitoAuthContext';
 import '../styles/Login.css';
 
 export default function Register() {
@@ -15,7 +14,7 @@ export default function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { signUp, signIn } = useCognitoAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,21 +40,13 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const response = await authAPI.register({
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        email: formData.email,
-        password: formData.password,
-        password_confirm: formData.password_confirm,
-        role: 'patient',
-      });
-
-      if (response.data.token) {
-        login(response.data.token, 'patient');
+      await signUp(formData.email, formData.password, formData.first_name, formData.last_name);
+      const result = await signIn(formData.email, formData.password);
+      if (result.success) {
         navigate('/patient/dashboard');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Rejestracja nie powiodła się');
+      setError(err.message || 'Rejestracja nie powiodła się');
     } finally {
       setLoading(false);
     }
