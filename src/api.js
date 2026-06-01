@@ -1,94 +1,83 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+const SCHEDULE_SERVICE_URL = import.meta.env.VITE_SCHEDULE_SERVICE_URL || 'http://localhost:8001';
+const FILE_UPLOAD_SERVICE_URL = import.meta.env.VITE_FILE_UPLOAD_SERVICE_URL || 'http://localhost:8002';
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 10000,
-});
+const createServiceApi = (baseURL) => {
+  const instance = axios.create({
+    baseURL,
+    headers: { 'Content-Type': 'application/json' },
+    timeout: 10000,
+  });
 
-// Add token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+  instance.interceptors.request.use((config) => {
+    const token = localStorage.getItem('id_token');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  });
 
-// Handle token expiration
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userRole');
-      window.location.href = '/login';
+  instance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userRole');
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
-  }
-);
+  );
 
-export const authAPI = {
-  login: (email, password) =>
-    api.post('/api/v2/auth/login/', { email, password }),
-  register: (data) =>
-    api.post('/api/v2/auth/register/', data),
-  logout: () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userRole');
-  },
-  getCurrentUser: () => api.get('/api/v2/auth/me/'),
+  return instance;
 };
 
+const scheduleApi = createServiceApi(SCHEDULE_SERVICE_URL);
+const fileUploadApi = createServiceApi(FILE_UPLOAD_SERVICE_URL);
+
 export const appointmentAPI = {
-  list: () => api.get('/api/v2/appointments'),
-  get: (id) => api.get(`/api/v2/appointments/${id}`),
-  create: (data) => api.post('/api/v2/appointments', data),
-  update: (id, data) => api.put(`/api/v2/appointments/${id}`, data),
-  cancel: (id) => api.post(`/api/v2/appointments/${id}/cancel`),
+  list: () => scheduleApi.get('/api/v1/appointments'),
+  get: (id) => scheduleApi.get(`/api/v1/appointments/${id}`),
+  create: (data) => {
+    const formData = new FormData();
+    formData.append('slot_id', data.slot_id);
+    if (data.notes) formData.append('notes', data.notes);
+    if (data.file) formData.append('file', data.file);
+    return scheduleApi.post('/api/v1/appointments', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  cancel: (id) => scheduleApi.post(`/api/v1/appointments/${id}/cancel`),
 };
 
 export const scheduleAPI = {
-  list: () => api.get('/api/v2/schedule'),
+  list: () => scheduleApi.get('/api/v1/doctor-schedules'),
   getAvailableSlots: (doctorId, date) =>
-    api.get(`/api/v2/schedule/slots`, { params: { doctor_id: doctorId, date } }),
+    scheduleApi.get('/api/v1/slots', { params: { doctor_id: doctorId, from: date, to: date } }),
 };
 
-export const paymentAPI = {
-  list: () => api.get('/api/v2/payments/orders'),
-  get: (id) => api.get(`/api/v2/payments/orders/${id}`),
-  create: (appointmentId) => api.post('/api/v2/payments/orders', { appointment_id: appointmentId }),
-  pay: (orderId) => api.post(`/api/v2/payments/orders/${orderId}/pay`),
-};
-
-export const medicalRecordAPI = {
-  list: () => api.get('/api/v2/medical-records'),
-  get: (id) => api.get(`/api/v2/medical-records/${id}`),
-  upload: (appointmentId, file) => {
+export const fileUploadAPI = {
+  list: () => fileUploadApi.get('/api/v1/files'),
+  get: (id) => fileUploadApi.get(`/api/v1/files/${id}`),
+  upload: (file, appointmentId) => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post(`/api/v2/medical-records/upload`, formData, {
+    if (appointmentId) formData.append('appointment_id', appointmentId);
+    return fileUploadApi.post('/api/v1/files', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
-      params: { appointment_id: appointmentId },
     });
   },
+  getForAppointment: (appointmentId) =>
+    fileUploadApi.get(`/api/v1/files/appointment/${appointmentId}`),
+  getShareUrl: (fileId) => fileUploadApi.post(`/api/v1/files/${fileId}/share`),
 };
 
 export const userAPI = {
-  list: () => api.get('/api/v2/users'),
-  get: (id) => api.get(`/api/v2/users/${id}`),
-  create: (data) => api.post('/api/v2/users', data),
-  update: (id, data) => api.put(`/api/v2/users/${id}`, data),
-};
-
-export const notificationAPI = {
-  list: () => api.get('/api/v2/notifications'),
-  markAsRead: (id) => api.put(`/api/v2/notifications/${id}/read`),
+  // Disabled - not used in MVP
+  list: () => Promise.reject('disabled'),
+  get: (id) => Promise.reject('disabled'),
+  create: (data) => Promise.reject('disabled'),
+  update: (id, data) => Promise.reject('disabled'),
 };
 
 export const getTokenRole = () => {
@@ -101,5 +90,3 @@ export const getTokenRole = () => {
     return null;
   }
 };
-
-export default api;

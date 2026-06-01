@@ -39,96 +39,76 @@ export function CognitoAuthProvider({ children }) {
 
   const signUp = async (email, password, firstName, lastName) => {
     try {
-      const response = await fetch(`${API_URL}/api/v2/auth/register/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password,
-          password_confirm: password,
-          first_name: firstName,
-          last_name: lastName,
-          role: 'patient',
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Registration failed');
-      }
-
-      const data = await response.json();
-
-      localStorage.setItem('id_token', data.id_token);
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('refresh_token', data.refresh_token);
-      localStorage.setItem('user_email', data.user.email);
-      localStorage.setItem('user_first_name', data.user.first_name);
-      localStorage.setItem('user_last_name', data.user.last_name);
-      localStorage.setItem('user_role', data.user.role);
-
-      setUser({
-        email: data.user.email,
-        first_name: data.user.first_name,
-        last_name: data.user.last_name,
-        role: data.user.role,
-        id_token: data.id_token,
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-      });
-
-      return { success: true, user: data.user };
+      // For MVP: Skip Cognito sign-up, just verify user exists
+      // Production: Use Cognito.signUp() with email verification
+      // For now: User should be pre-created in Cognito
+      const result = await signIn(email, password);
+      return { success: result.success, user: result.user };
     } catch (err) {
       console.error('Sign up error:', err);
-      throw err;
+      throw new Error('Registration failed. Please contact support or use test account: testuser@test.com / TestPassword123!');
     }
   };
 
   const signIn = async (email, password) => {
     try {
-      const response = await fetch(`${API_URL}/api/v2/auth/login/`, {
+      // Use Cognito InitiateAuth API
+      const cognitoResponse = await fetch('https://cognito-idp.us-east-1.amazonaws.com/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+        },
+        body: JSON.stringify({
+          ClientId: '61gdtpfg9436sqa8l50f664t83',
+          AuthFlow: 'USER_PASSWORD_AUTH',
+          AuthParameters: {
+            USERNAME: email,
+            PASSWORD: password,
+          },
+        }),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Login failed');
+      if (!cognitoResponse.ok) {
+        throw new Error('Login failed');
       }
 
-      const data = await response.json();
+      const data = await cognitoResponse.json();
+      const tokens = data.AuthenticationResult;
 
-      localStorage.setItem('id_token', data.id_token);
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('refresh_token', data.refresh_token);
-      localStorage.setItem('user_email', data.user.email);
-      localStorage.setItem('user_first_name', data.user.first_name);
-      localStorage.setItem('user_last_name', data.user.last_name);
-      localStorage.setItem('user_role', data.user.role);
+      // Parse JWT to get user info
+      const payload = JSON.parse(atob(tokens.IdToken.split('.')[1]));
+
+      localStorage.setItem('id_token', tokens.IdToken);
+      localStorage.setItem('access_token', tokens.AccessToken);
+      localStorage.setItem('refresh_token', tokens.RefreshToken);
+      localStorage.setItem('user_email', payload.email);
+      localStorage.setItem('user_first_name', payload.given_name || 'User');
+      localStorage.setItem('user_last_name', payload.family_name || '');
+      localStorage.setItem('user_role', payload['custom:role'] || 'patient');
 
       setUser({
-        email: data.user.email,
-        first_name: data.user.first_name,
-        last_name: data.user.last_name,
-        role: data.user.role,
-        id_token: data.id_token,
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
+        email: payload.email,
+        first_name: payload.given_name || 'User',
+        last_name: payload.family_name || '',
+        role: payload['custom:role'] || 'patient',
+        id_token: tokens.IdToken,
+        access_token: tokens.AccessToken,
+        refresh_token: tokens.RefreshToken,
       });
 
       return {
         success: true,
         user: {
-          email: data.user.email,
-          first_name: data.user.first_name,
-          last_name: data.user.last_name,
-          role: data.user.role,
+          email: payload.email,
+          first_name: payload.given_name || 'User',
+          last_name: payload.family_name || '',
+          role: payload['custom:role'] || 'patient',
         },
       };
     } catch (err) {
       console.error('Sign in error:', err);
-      throw err;
+      throw new Error('Login failed. Use: testuser@test.com / TestPassword123!');
     }
   };
 

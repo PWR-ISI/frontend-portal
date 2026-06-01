@@ -1,8 +1,49 @@
+import { useEffect, useState } from 'react';
 import { useCognitoAuth } from '../../CognitoAuthContext';
+import { appointmentAPI } from '../../api';
+import AppointmentsList from '../../components/AppointmentsList';
+import BookAppointmentModal from './BookAppointmentModal';
+import UploadFileModal from './UploadFileModal';
 import '../../styles/patient/Dashboard.css';
 
 export default function PatientDashboard() {
   const { user } = useCognitoAuth();
+  const [appointments, setAppointments] = useState([]);
+  const [showBooking, setShowBooking] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadAppointments();
+  }, []);
+
+  const loadAppointments = async () => {
+    try {
+      const response = await appointmentAPI.list();
+      setAppointments(response.data || []);
+    } catch (error) {
+      console.error('Failed to load appointments:', error);
+      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAppointmentCreated = () => {
+    setShowBooking(false);
+    loadAppointments();
+  };
+
+  const handleCancelAppointment = async (appointmentId) => {
+    if (window.confirm('Are you sure you want to cancel this appointment?')) {
+      try {
+        await appointmentAPI.cancel(appointmentId);
+        loadAppointments();
+      } catch (error) {
+        console.error('Failed to cancel appointment:', error);
+      }
+    }
+  };
 
   return (
     <div className="patient-dashboard">
@@ -22,17 +63,30 @@ export default function PatientDashboard() {
       <section className="dashboard-section">
         <h2>Quick Actions</h2>
         <div className="actions-grid">
-          <button className="action-btn">Book Appointment</button>
-          <button className="action-btn">View Medical Records</button>
-          <button className="action-btn">Contact Doctor</button>
-          <button className="action-btn">View Prescriptions</button>
+          <button className="action-btn" onClick={() => setShowBooking(true)}>Book Appointment</button>
+          <button className="action-btn" onClick={() => setShowUpload(true)}>Upload File</button>
+          <button className="action-btn" disabled title="Coming soon">View Medical Records</button>
+          <button className="action-btn" disabled title="Coming soon">Contact Doctor</button>
         </div>
       </section>
 
       <section className="dashboard-section">
         <h2>Upcoming Appointments</h2>
-        <p className="no-appointments">No upcoming appointments</p>
+        {loading ? (
+          <p>Loading...</p>
+        ) : appointments.length === 0 ? (
+          <p className="no-appointments">No upcoming appointments</p>
+        ) : (
+          <AppointmentsList appointments={appointments} onCancel={handleCancelAppointment} />
+        )}
       </section>
+
+      {showBooking && (
+        <BookAppointmentModal onClose={() => setShowBooking(false)} onSuccess={handleAppointmentCreated} />
+      )}
+      {showUpload && (
+        <UploadFileModal onClose={() => setShowUpload(false)} onSuccess={() => setShowUpload(false)} />
+      )}
     </div>
   );
 }
