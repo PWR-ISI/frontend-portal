@@ -14,7 +14,7 @@ export default function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { signUp, signIn } = useCognitoAuth();
+  const { signUp } = useCognitoAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,8 +40,14 @@ export default function Register() {
 
     setLoading(true);
     try {
-      await signUp(formData.email, formData.password, formData.first_name, formData.last_name);
-      const result = await signIn(formData.email, formData.password);
+      const result = await signUp(
+        formData.email,
+        formData.password,
+        formData.password_confirm,
+        formData.first_name,
+        formData.last_name,
+        'patient'
+      );
       if (result.success) {
         navigate('/patient/dashboard');
       }

@@ -1,9 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
-const COGNITO_ENDPOINT = import.meta.env.VITE_COGNITO_ENDPOINT || 'http://localhost:4566/';
-const COGNITO_CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || '61gdtpfg9436sqa8l50f664t83';
+const AUTH_SERVICE_URL = import.meta.env.VITE_AUTH_SERVICE_URL || 'http://localhost:8001/api/v2';
 
 export function CognitoAuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -39,74 +37,100 @@ export function CognitoAuthProvider({ children }) {
     }
   };
 
-  const signUp = async (email, password, firstName, lastName) => {
+  const signUp = async (email, password, passwordConfirm, firstName, lastName, role = 'patient') => {
     try {
-      // For MVP: Skip Cognito sign-up, just verify user exists
-      // Production: Use Cognito.signUp() with email verification
-      // For now: User should be pre-created in Cognito
-      const result = await signIn(email, password);
-      return { success: result.success, user: result.user };
+      const response = await fetch(`${AUTH_SERVICE_URL}/auth/register/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          password_confirm: passwordConfirm,
+          first_name: firstName,
+          last_name: lastName,
+          role,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Registration failed');
+      }
+
+      const data = await response.json();
+
+      localStorage.setItem('id_token', data.id_token);
+      localStorage.setItem('access_token', data.access_token);
+      localStorage.setItem('refresh_token', data.refresh_token);
+      localStorage.setItem('user_email', data.user.email);
+      localStorage.setItem('user_first_name', data.user.first_name || firstName);
+      localStorage.setItem('user_last_name', data.user.last_name || lastName);
+      localStorage.setItem('user_role', data.user.role || role);
+
+      setUser({
+        email: data.user.email,
+        first_name: data.user.first_name || firstName,
+        last_name: data.user.last_name || lastName,
+        role: data.user.role || role,
+        id_token: data.id_token,
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+
+      return {
+        success: true,
+        user: data.user,
+      };
     } catch (err) {
       console.error('Sign up error:', err);
-      throw new Error('Registration failed. Please contact support or use test account: testuser@test.com / TestPassword123!');
+      throw new Error(`Registration failed: ${err.message}`);
     }
   };
 
   const signIn = async (email, password) => {
     try {
-      // Use Cognito InitiateAuth API
-      const cognitoResponse = await fetch(COGNITO_ENDPOINT, {
+      // Call auth service API instead of Cognito directly
+      const response = await fetch(`${AUTH_SERVICE_URL}/auth/login/`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-amz-json-1.1',
-          'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ClientId: COGNITO_CLIENT_ID,
-          AuthFlow: 'USER_PASSWORD_AUTH',
-          AuthParameters: {
-            USERNAME: email,
-            PASSWORD: password,
-          },
+          email,
+          password,
         }),
       });
 
-      if (!cognitoResponse.ok) {
-        throw new Error('Login failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Login failed');
       }
 
-      const data = await cognitoResponse.json();
-      const tokens = data.AuthenticationResult;
+      const data = await response.json();
 
-      // Parse JWT to get user info
-      const payload = JSON.parse(atob(tokens.IdToken.split('.')[1]));
-
-      localStorage.setItem('id_token', tokens.IdToken);
-      localStorage.setItem('access_token', tokens.AccessToken);
-      localStorage.setItem('refresh_token', tokens.RefreshToken);
-      localStorage.setItem('user_email', payload.email);
-      localStorage.setItem('user_first_name', payload.given_name || 'User');
-      localStorage.setItem('user_last_name', payload.family_name || '');
-      localStorage.setItem('user_role', payload['custom:role'] || 'patient');
+      localStorage.setItem('id_token', data.id_token);
+      localStorage.setItem('access_token', data.access_token);
+      localStorage.setItem('refresh_token', data.refresh_token);
+      localStorage.setItem('user_email', data.user.email);
+      localStorage.setItem('user_first_name', data.user.first_name || 'User');
+      localStorage.setItem('user_last_name', data.user.last_name || '');
+      localStorage.setItem('user_role', data.user.role || 'patient');
 
       setUser({
-        email: payload.email,
-        first_name: payload.given_name || 'User',
-        last_name: payload.family_name || '',
-        role: payload['custom:role'] || 'patient',
-        id_token: tokens.IdToken,
-        access_token: tokens.AccessToken,
-        refresh_token: tokens.RefreshToken,
+        email: data.user.email,
+        first_name: data.user.first_name || 'User',
+        last_name: data.user.last_name || '',
+        role: data.user.role || 'patient',
+        id_token: data.id_token,
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
       });
 
       return {
         success: true,
-        user: {
-          email: payload.email,
-          first_name: payload.given_name || 'User',
-          last_name: payload.family_name || '',
-          role: payload['custom:role'] || 'patient',
-        },
+        user: data.user,
       };
     } catch (err) {
       console.error('Sign in error:', err);
