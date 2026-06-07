@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+const COGNITO_ENDPOINT = import.meta.env.VITE_COGNITO_ENDPOINT || 'http://localhost:4566/';
+const COGNITO_CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || '61gdtpfg9436sqa8l50f664t83';
 
 export function CognitoAuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -53,14 +55,14 @@ export function CognitoAuthProvider({ children }) {
   const signIn = async (email, password) => {
     try {
       // Use Cognito InitiateAuth API
-      const cognitoResponse = await fetch('https://cognito-idp.us-east-1.amazonaws.com/', {
+      const cognitoResponse = await fetch(COGNITO_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-amz-json-1.1',
           'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
         },
         body: JSON.stringify({
-          ClientId: '61gdtpfg9436sqa8l50f664t83',
+          ClientId: COGNITO_CLIENT_ID,
           AuthFlow: 'USER_PASSWORD_AUTH',
           AuthParameters: {
             USERNAME: email,
