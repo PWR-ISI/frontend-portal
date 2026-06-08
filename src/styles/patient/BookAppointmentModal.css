@@ -164,36 +164,6 @@ input[type="date"] {
   box-sizing: border-box;
 }
 
-.file-upload-label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-}
-
-.file-upload-btn {
-  padding: 8px 16px;
-  background: #667eea;
-  color: white;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  white-space: nowrap;
-  transition: background 0.15s;
-}
-
-.file-upload-label:hover .file-upload-btn {
-  background: #5a6fd6;
-}
-
-.file-upload-name {
-  color: #666;
-  font-size: 0.9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 select {
   box-sizing: border-box;
 }

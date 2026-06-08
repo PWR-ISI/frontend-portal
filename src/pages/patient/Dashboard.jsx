@@ -3,14 +3,12 @@ import { useCognitoAuth } from '../../CognitoAuthContext';
 import { appointmentAPI } from '../../api';
 import AppointmentsList from '../../components/AppointmentsList';
 import BookAppointmentModal from './BookAppointmentModal';
-import UploadFileModal from './UploadFileModal';
 import '../../styles/patient/Dashboard.css';
 
 export default function PatientDashboard() {
   const { user } = useCognitoAuth();
   const [appointments, setAppointments] = useState([]);
   const [showBooking, setShowBooking] = useState(false);
-  const [showUpload, setShowUpload] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -64,7 +62,6 @@ export default function PatientDashboard() {
         <h2>Quick Actions</h2>
         <div className="actions-grid">
           <button className="action-btn" onClick={() => setShowBooking(true)}>Book Appointment</button>
-          <button className="action-btn" onClick={() => setShowUpload(true)}>Upload File</button>
           <button className="action-btn" disabled title="Coming soon">View Medical Records</button>
           <button className="action-btn" disabled title="Coming soon">Contact Doctor</button>
         </div>
@@ -83,9 +80,6 @@ export default function PatientDashboard() {
 
       {showBooking && (
         <BookAppointmentModal onClose={() => setShowBooking(false)} onSuccess={handleAppointmentCreated} />
-      )}
-      {showUpload && (
-        <UploadFileModal onClose={() => setShowUpload(false)} onSuccess={() => setShowUpload(false)} />
       )}
     </div>
   );

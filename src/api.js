@@ -2,7 +2,6 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
 const SCHEDULE_SERVICE_URL = import.meta.env.VITE_SCHEDULE_SERVICE_URL || 'http://localhost:8001';
-const FILE_UPLOAD_SERVICE_URL = import.meta.env.VITE_FILE_UPLOAD_SERVICE_URL || 'http://localhost:8002';
 
 const createServiceApi = (baseURL) => {
   const instance = axios.create({
@@ -33,7 +32,6 @@ const createServiceApi = (baseURL) => {
 };
 
 const scheduleApi = createServiceApi(SCHEDULE_SERVICE_URL);
-const fileUploadApi = createServiceApi(FILE_UPLOAD_SERVICE_URL);
 
 export const appointmentAPI = {
   list: () => scheduleApi.get('/api/v1/appointments'),
@@ -54,22 +52,6 @@ export const scheduleAPI = {
   list: () => scheduleApi.get('/api/v1/doctor-schedules'),
   getAvailableSlots: (doctorId, date) =>
     scheduleApi.get('/api/v1/slots', { params: { doctor_id: doctorId, from: date, to: date } }),
-};
-
-export const fileUploadAPI = {
-  list: () => fileUploadApi.get('/api/v1/files'),
-  get: (id) => fileUploadApi.get(`/api/v1/files/${id}`),
-  upload: (file, appointmentId) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    if (appointmentId) formData.append('appointment_id', appointmentId);
-    return fileUploadApi.post('/api/v1/files', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  },
-  getForAppointment: (appointmentId) =>
-    fileUploadApi.get(`/api/v1/files/appointment/${appointmentId}`),
-  getShareUrl: (fileId) => fileUploadApi.post(`/api/v1/files/${fileId}/share`),
 };
 
 export const userAPI = {

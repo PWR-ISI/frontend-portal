@@ -1,53 +1,12 @@
-import { useState, useEffect } from 'react';
-import { fileUploadAPI } from '../api';
+import { useState } from 'react';
 import '../styles/components/AppointmentsList.css';
 
 function AppointmentDetailModal({ appointment, onClose }) {
-  const [extraFiles, setExtraFiles] = useState([]);
-  const [downloading, setDownloading] = useState(null);
-
-  useEffect(() => {
-    fileUploadAPI.getForAppointment(appointment.id)
-      .then(res => setExtraFiles(res.data || []))
-      .catch(() => {});
-  }, [appointment.id]);
-
   const formatDate = (dateString) =>
     new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
       hour: '2-digit', minute: '2-digit',
     });
-
-  const formatSize = (bytes) => {
-    if (!bytes) return '';
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  const handleDownload = async (file, source) => {
-    setDownloading(file.id);
-    try {
-      if (source === 'appointment' && file.download_url) {
-        window.open(file.download_url, '_blank');
-      } else if (source === 'fileservice') {
-        if (file.download_url) {
-          window.open(file.download_url, '_blank');
-        } else {
-          const res = await fileUploadAPI.getShareUrl(file.id);
-          window.open(res.data.download_url, '_blank');
-        }
-      }
-    } catch (err) {
-      alert('Failed to get download link. Please try again.');
-    } finally {
-      setDownloading(null);
-    }
-  };
-
-  // Use only file-upload service records to avoid duplicates
-  // (files uploaded at booking time are stored in both services)
-  const allFiles = extraFiles.map(f => ({ ...f, _source: 'fileservice' }));
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -70,43 +29,6 @@ function AppointmentDetailModal({ appointment, onClose }) {
           {appointment.notes && (
             <div><strong>Notes:</strong> {appointment.notes}</div>
           )}
-
-          <div>
-            <strong>Files:</strong>
-            {allFiles.length === 0 ? (
-              <span style={{ color: '#888', marginLeft: '0.5rem' }}>No files attached</span>
-            ) : (
-              <table style={{ width: '100%', marginTop: '0.5rem', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                <thead>
-                  <tr style={{ background: '#f5f5f5' }}>
-                    <th style={{ padding: '6px 8px', textAlign: 'left' }}>Name</th>
-                    <th style={{ padding: '6px 8px', textAlign: 'right' }}>Size</th>
-                    <th style={{ padding: '6px 8px', textAlign: 'center' }}>Download</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allFiles.map(file => (
-                    <tr key={file.id} style={{ borderTop: '1px solid #eee' }}>
-                      <td style={{ padding: '6px 8px' }}>{file.original_name || 'file'}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right', color: '#666' }}>
-                        {formatSize(file.size_bytes)}
-                      </td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>
-                        <button
-                          className="btn-action btn-view"
-                          style={{ padding: '4px 10px', fontSize: '0.8rem' }}
-                          disabled={downloading === file.id}
-                          onClick={() => handleDownload(file, file._source)}
-                        >
-                          {downloading === file.id ? '...' : '⬇ Download'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
 
           <div style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.25rem' }}>
             ID: {appointment.id}

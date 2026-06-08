@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { appointmentAPI, scheduleAPI, fileUploadAPI } from '../../api';
+import { appointmentAPI, scheduleAPI } from '../../api';
 import '../../styles/patient/BookAppointmentModal.css';
 
 export default function BookAppointmentModal({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     slot_id: '',
     notes: '',
-    file: null,
   });
   const [slots, setSlots] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
@@ -38,10 +37,6 @@ export default function BookAppointmentModal({ onClose, onSuccess }) {
     }
   };
 
-  const handleFileChange = (e) => {
-    setFormData({ ...formData, file: e.target.files[0] || null });
-  };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -63,19 +58,9 @@ export default function BookAppointmentModal({ onClose, onSuccess }) {
       const appointmentData = {
         slot_id: formData.slot_id,
         notes: formData.notes,
-        file: formData.file,
       };
 
-      const response = await appointmentAPI.create(appointmentData);
-      const appointmentId = response.data.id;
-
-      if (formData.file) {
-        try {
-          await fileUploadAPI.upload(formData.file, appointmentId);
-        } catch (uploadErr) {
-          console.warn('Appointment created but file attachment failed:', uploadErr);
-        }
-      }
+      await appointmentAPI.create(appointmentData);
 
       setSuccessMessage('Appointment booked successfully!');
       setTimeout(() => {
@@ -152,15 +137,6 @@ export default function BookAppointmentModal({ onClose, onSuccess }) {
               placeholder="Any additional information for the doctor..."
               rows="3"
             />
-          </div>
-
-          <div className="form-group">
-            <label>Attach File (Optional)</label>
-            <label className="file-upload-label">
-              <input type="file" style={{ display: 'none' }} onChange={handleFileChange} />
-              <span className="file-upload-btn">Choose file</span>
-              <span className="file-upload-name">{formData.file ? formData.file.name : 'No file chosen'}</span>
-            </label>
           </div>
 
           <div className="modal-actions">
