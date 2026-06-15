@@ -1,5 +1,6 @@
 import { useCognitoAuth } from '../CognitoAuthContext';
 import { useNavigate } from 'react-router-dom';
+import NotificationBell from './NotificationBell';
 import '../styles/components/Layout.css';
 
 export default function Layout({ children }) {
@@ -31,6 +32,7 @@ export default function Layout({ children }) {
 
         <div className="navbar-menu">
           <span className="user-info">Welcome, {user?.email}</span>
+          <NotificationBell />
           <button className="btn-logout" onClick={handleLogout}>
             Logout
           </button>

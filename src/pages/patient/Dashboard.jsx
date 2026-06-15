@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useCognitoAuth } from '../../CognitoAuthContext';
-import { appointmentAPI } from '../../api';
+import { appointmentAPI, medicalRecordAPI } from '../../api';
 import AppointmentsList from '../../components/AppointmentsList';
 import BookAppointmentModal from './BookAppointmentModal';
 import '../../styles/patient/Dashboard.css';
@@ -10,6 +10,9 @@ export default function PatientDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [showBooking, setShowBooking] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState([]);
+  const [recordsLoading, setRecordsLoading] = useState(false);
+  const [showRecords, setShowRecords] = useState(false);
 
   useEffect(() => {
     loadAppointments();
@@ -30,6 +33,23 @@ export default function PatientDashboard() {
   const handleAppointmentCreated = () => {
     setShowBooking(false);
     loadAppointments();
+  };
+
+  const handleViewRecords = async () => {
+    if (showRecords) {
+      setShowRecords(false);
+      return;
+    }
+    setShowRecords(true);
+    setRecordsLoading(true);
+    try {
+      const res = await medicalRecordAPI.list();
+      setRecords(res.data.results || res.data || []);
+    } catch {
+      setRecords([]);
+    } finally {
+      setRecordsLoading(false);
+    }
   };
 
   const handleCancelAppointment = async (appointmentId) => {
@@ -62,10 +82,40 @@ export default function PatientDashboard() {
         <h2>Quick Actions</h2>
         <div className="actions-grid">
           <button className="action-btn" onClick={() => setShowBooking(true)}>Book Appointment</button>
-          <button className="action-btn" disabled title="Coming soon">View Medical Records</button>
+          <button className="action-btn" onClick={handleViewRecords}>
+            {showRecords ? 'Hide Records' : 'View Medical Records'}
+          </button>
           <button className="action-btn" disabled title="Coming soon">Contact Doctor</button>
         </div>
       </section>
+
+      {showRecords && (
+        <section className="dashboard-section">
+          <h2>Medical Records</h2>
+          {recordsLoading ? (
+            <p>Loading...</p>
+          ) : records.length === 0 ? (
+            <p className="no-appointments">No medical records found</p>
+          ) : (
+            <div className="records-list">
+              {records.map(r => (
+                <div key={r.id} className="record-item">
+                  <div className="record-icon">📄</div>
+                  <div className="record-info">
+                    <span className="record-name">{r.file_name}</span>
+                    <span className="record-type-badge">{r.record_type}</span>
+                    {r.description && <p className="record-desc">{r.description}</p>}
+                    <span className="record-date">{new Date(r.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <a href={r.file_url} target="_blank" rel="noreferrer" className="record-download">
+                    Download
+                  </a>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="dashboard-section">
         <h2>Upcoming Appointments</h2>

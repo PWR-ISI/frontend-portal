@@ -1,12 +1,24 @@
 import { useState, useEffect } from 'react';
+import { useCognitoAuth } from '../../CognitoAuthContext';
 import { appointmentAPI, scheduleAPI, doctorAPI, facilityAPI } from '../../api';
 import '../../styles/patient/BookAppointmentModal.css';
 
 const asList = (data) => (Array.isArray(data) ? data : (data?.results || []));
 
+const getPatientId = () => {
+  try {
+    const token = localStorage.getItem('id_token');
+    if (!token) return null;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.sub || null;
+  } catch { return null; }
+};
+
 export default function BookAppointmentModal({ onClose, onSuccess }) {
+  const { user } = useCognitoAuth();
   const [formData, setFormData] = useState({ slot_id: '', notes: '' });
   const [slots, setSlots] = useState([]);
+  const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedDate, setSelectedDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -74,6 +86,10 @@ export default function BookAppointmentModal({ onClose, onSuccess }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'slot_id') {
+      const slot = slots.find(s => s.id === value);
+      setSelectedSlot(slot || null);
+    }
     setFormData({ ...formData, [name]: value });
   };
 
@@ -82,16 +98,33 @@ export default function BookAppointmentModal({ onClose, onSuccess }) {
     setError('');
     setSuccessMessage('');
     if (!selectedDoctor) { setError('Wybierz lekarza.'); return; }
-    if (!formData.slot_id) { setError('Wybierz termin.'); return; }
+    if (!formData.slot_id || !selectedSlot) { setError('Wybierz termin.'); return; }
+
+    const patientId = getPatientId();
+    if (!patientId) { setError('Nie można odczytać ID pacjenta — zaloguj się ponownie.'); return; }
 
     setLoading(true);
     try {
-      await appointmentAPI.create({ slot_id: formData.slot_id, notes: formData.notes });
+      const facilityId = selectedSlot.facility_id &&
+        selectedSlot.facility_id !== '00000000-0000-0000-0000-000000000000'
+        ? selectedSlot.facility_id : null;
+      await appointmentAPI.create({
+        slot_id: selectedSlot.id,
+        patient_id: patientId,
+        doctor_id: selectedSlot.doctor_id,
+        facility_id: facilityId,
+        scheduled_start: selectedSlot.start_time,
+        scheduled_end: selectedSlot.end_time,
+        notes: formData.notes,
+      });
       setSuccessMessage('Wizyta zarezerwowana!');
       setTimeout(() => onSuccess(), 1000);
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || 'Nie udało się utworzyć wizyty.');
-      console.error('Error creating appointment:', err);
+      const data = err.response?.data;
+      const msg = typeof data === 'string' ? data
+        : data?.detail || data?.non_field_errors?.[0] || JSON.stringify(data) || err.message;
+      setError(msg || 'Nie udało się utworzyć wizyty.');
+      console.error('Error creating appointment:', err.response?.data || err);
     } finally {
       setLoading(false);
     }
