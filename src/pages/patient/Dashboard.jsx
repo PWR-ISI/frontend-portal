@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useCognitoAuth } from '../../CognitoAuthContext';
-import { appointmentAPI, medicalRecordAPI } from '../../api';
+import { appointmentAPI, medicalRecordAPI, doctorAPI } from '../../api';
 import AppointmentsList from '../../components/AppointmentsList';
 import BookAppointmentModal from './BookAppointmentModal';
 import '../../styles/patient/Dashboard.css';
@@ -20,8 +20,15 @@ export default function PatientDashboard() {
 
   const loadAppointments = async () => {
     try {
-      const response = await appointmentAPI.list();
-      setAppointments(response.data || []);
+      const [apptRes, docRes] = await Promise.all([
+        appointmentAPI.list(),
+        doctorAPI.search({}).catch(() => ({ data: [] })),
+      ]);
+      const doctors = Array.isArray(docRes.data) ? docRes.data : (docRes.data?.results || []);
+      const nameById = {};
+      doctors.forEach(d => { nameById[d.user_id] = `Dr ${d.first_name} ${d.last_name}`; });
+      const list = Array.isArray(apptRes.data) ? apptRes.data : (apptRes.data?.results || []);
+      setAppointments(list.map(a => ({ ...a, doctor_name: nameById[a.doctor_id] || 'Dr Anna Lekarz' })));
     } catch (error) {
       console.error('Failed to load appointments:', error);
       setAppointments([]);

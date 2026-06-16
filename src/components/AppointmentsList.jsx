@@ -1,12 +1,26 @@
 import { useState } from 'react';
 import '../styles/components/AppointmentsList.css';
 
+// Map appointment-service statuses to friendly Polish labels.
+const STATUS_LABELS = {
+  paid: 'Potwierdzona',
+  pending_payment: 'Oczekuje na płatność',
+  completed: 'Zakończona',
+  cancelled: 'Odwołana',
+  expired: 'Wygasła',
+  failed: 'Nieudana',
+  scheduled: 'Zaplanowana',
+};
+
+const apptDate = (a) => a.scheduled_start || a.appointment_date;
+const statusLabel = (s) => STATUS_LABELS[s] || (s ? s.charAt(0).toUpperCase() + s.slice(1) : '—');
+
 function AppointmentDetailModal({ appointment, onClose }) {
   const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString('en-US', {
+    dateString ? new Date(dateString).toLocaleDateString('pl-PL', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
       hour: '2-digit', minute: '2-digit',
-    });
+    }) : '—';
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -16,14 +30,13 @@ function AppointmentDetailModal({ appointment, onClose }) {
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
         <div className="modal-body" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <div><strong>Date & Time:</strong> {formatDate(appointment.appointment_date)}</div>
-          <div><strong>Doctor:</strong> {appointment.doctor_name || 'N/A'}</div>
-          <div><strong>Patient:</strong> {appointment.patient_name || 'N/A'}</div>
-          <div><strong>Type:</strong> {appointment.appointment_type || 'Regular'}</div>
+          <div><strong>Termin:</strong> {formatDate(apptDate(appointment))}</div>
+          <div><strong>Lekarz:</strong> {appointment.doctor_name || 'Dr Anna Lekarz'}</div>
+          <div><strong>Typ:</strong> {appointment.appointment_type || 'Wizyta lekarska'}</div>
           <div>
             <strong>Status:</strong>{' '}
-            <span className={`status ${appointment.status.toLowerCase()}`}>
-              {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+            <span className={`status ${(appointment.status || '').toLowerCase()}`}>
+              {statusLabel(appointment.status)}
             </span>
           </div>
           {appointment.notes && (
@@ -46,49 +59,48 @@ export default function AppointmentsList({ appointments, onCancel }) {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString('en-US', {
+    dateString ? new Date(dateString).toLocaleDateString('pl-PL', {
       weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
       hour: '2-digit', minute: '2-digit',
-    });
+    }) : '—';
 
-  const getStatusClass = (status) => `status ${status.toLowerCase()}`;
+  const getStatusClass = (status) => `status ${(status || '').toLowerCase()}`;
+  const canCancel = (s) => s === 'scheduled' || s === 'paid' || s === 'pending_payment';
 
   return (
     <>
       <div className="appointments-list">
         {appointments.length === 0 ? (
-          <p className="empty-state">No appointments</p>
+          <p className="empty-state">Brak wizyt</p>
         ) : (
           <table className="appointments-table">
             <thead>
               <tr>
-                <th>Date & Time</th>
-                <th>Doctor</th>
-                <th>Patient</th>
-                <th>Type</th>
+                <th>Termin</th>
+                <th>Lekarz</th>
+                <th>Typ</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th>Akcje</th>
               </tr>
             </thead>
             <tbody>
               {appointments.map(appointment => (
                 <tr key={appointment.id}>
-                  <td>{formatDate(appointment.appointment_date)}</td>
-                  <td>{appointment.doctor_name || 'N/A'}</td>
-                  <td>{appointment.patient_name || 'N/A'}</td>
-                  <td>{appointment.appointment_type || 'Regular'}</td>
+                  <td>{formatDate(apptDate(appointment))}</td>
+                  <td>{appointment.doctor_name || 'Dr Anna Lekarz'}</td>
+                  <td>{appointment.appointment_type || 'Wizyta lekarska'}</td>
                   <td>
                     <span className={getStatusClass(appointment.status)}>
-                      {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                      {statusLabel(appointment.status)}
                     </span>
                   </td>
                   <td>
                     <button className="btn-action btn-view" onClick={() => setSelectedAppointment(appointment)}>
-                      View
+                      Szczegóły
                     </button>
-                    {appointment.status === 'scheduled' && (
+                    {canCancel(appointment.status) && (
                       <button className="btn-action btn-cancel" onClick={() => onCancel && onCancel(appointment.id)}>
-                        Cancel
+                        Odwołaj
                       </button>
                     )}
                   </td>

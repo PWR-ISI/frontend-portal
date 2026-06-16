@@ -45,7 +45,14 @@ export const appointmentAPI = {
   list: () => scheduleApi.get('/api/v1/appointments/'),
   get: (id) => scheduleApi.get(`/api/v1/appointments/${id}/`),
   create: (data) => {
-    const payload = { slot_id: data.slot_id };
+    const payload = {
+      slot_id: data.slot_id,
+      patient_id: data.patient_id,
+      doctor_id: data.doctor_id,
+      scheduled_start: data.scheduled_start,
+      scheduled_end: data.scheduled_end,
+    };
+    if (data.facility_id) payload.facility_id = data.facility_id;
     if (data.notes) payload.notes = data.notes;
     return scheduleApi.post('/api/v1/appointments/', payload);
   },
