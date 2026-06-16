@@ -125,6 +125,7 @@
 .notif-content {
   flex: 1;
   min-width: 0;
+  cursor: pointer;
 }
 
 .notif-type {
@@ -144,6 +145,12 @@
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+.notification-item.expanded .notif-message {
+  -webkit-line-clamp: unset;
+  display: block;
+  overflow: visible;
 }
 
 .notif-time {

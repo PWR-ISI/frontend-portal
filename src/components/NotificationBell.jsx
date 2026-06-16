@@ -18,6 +18,7 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -100,14 +101,18 @@ export default function NotificationBell() {
               <p className="notif-empty">No notifications</p>
             ) : (
               notifications.map(n => (
-                <div key={n.id} className={`notification-item ${n.is_read ? 'read' : 'unread'}`}>
-                  <div className="notif-content">
+                <div key={n.id} className={`notification-item ${n.is_read ? 'read' : 'unread'} ${expandedId === n.id ? 'expanded' : ''}`}>
+                  <div
+                    className="notif-content"
+                    onClick={() => setExpandedId(expandedId === n.id ? null : n.id)}
+                    title={expandedId === n.id ? 'Kliknij, aby zwinąć' : 'Kliknij, aby zobaczyć pełną treść'}
+                  >
                     <span className="notif-type">{TYPE_LABELS[n.notification_type] || n.notification_type}</span>
                     <p className="notif-message">{n.message}</p>
                     <span className="notif-time">{new Date(n.created_at).toLocaleString()}</span>
                   </div>
                   {!n.is_read && (
-                    <button className="notif-read-btn" onClick={() => handleMarkRead(n.id)} title="Mark as read">
+                    <button className="notif-read-btn" onClick={() => handleMarkRead(n.id)} title="Oznacz jako przeczytane">
                       ✓
                     </button>
                   )}
