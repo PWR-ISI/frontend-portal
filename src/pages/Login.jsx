@@ -22,7 +22,7 @@ export default function Login() {
         navigate(`/${result.user.role.toLowerCase()}/dashboard`);
       }
     } catch (err) {
-      setError(err.message || 'Login failed');
+      setError(err.message || 'Logowanie nie powiodło się');
     } finally {
       setLoading(false);
     }
@@ -31,30 +31,30 @@ export default function Login() {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1>ISI Medical System</h1>
-        <p className="subtitle">Medical Appointment Management</p>
+        <h1>System Medyczny ISI</h1>
+        <p className="subtitle">Zarządzanie wizytami lekarskimi</p>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Email Address</label>
+            <label htmlFor="email">Adres email</label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              placeholder="Wpisz swój email"
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">Hasło</label>
             <input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder="Wpisz swoje hasło"
               required
             />
           </div>
@@ -62,17 +62,16 @@ export default function Login() {
           {error && <div className="error-message">{error}</div>}
 
           <button type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? 'Logowanie...' : 'Zaloguj się'}
           </button>
         </form>
 
         <div className="login-roles">
-          <p className="roles-hint">Demo Credentials:</p>
+          <p className="roles-hint">Konta demonstracyjne:</p>
           <ul>
-            <li><strong>Patient:</strong> patient@example.com</li>
-            <li><strong>Doctor:</strong> doctor@example.com</li>
-            <li><strong>Staff:</strong> staff@example.com</li>
-            <li><strong>Admin:</strong> admin@example.com</li>
+            <li><strong>Pacjent:</strong> patient@isi.test / Patient123!</li>
+            <li><strong>Lekarz:</strong> kardiolog@isi.test / Doctor123!</li>
+            <li><strong>Administrator:</strong> admin@isi.test / Admin123!</li>
           </ul>
         </div>
 

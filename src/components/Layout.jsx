@@ -14,10 +14,10 @@ export default function Layout({ children }) {
 
   const getRoleLabel = (role) => {
     const labels = {
-      patient: 'Patient Portal',
-      doctor: 'Doctor Portal',
-      staff: 'Staff Portal',
-      admin: 'Admin Portal',
+      patient: 'Portal pacjenta',
+      doctor: 'Portal lekarza',
+      staff: 'Portal personelu',
+      admin: 'Portal administratora',
     };
     return labels[role] || 'Portal';
   };
@@ -26,15 +26,15 @@ export default function Layout({ children }) {
     <div className="layout">
       <nav className="navbar">
         <div className="navbar-brand">
-          <h1>ISI Medical System</h1>
+          <h1>System Medyczny ISI</h1>
           <span className="role-badge">{getRoleLabel(user?.role)}</span>
         </div>
 
         <div className="navbar-menu">
-          <span className="user-info">Welcome, {user?.email}</span>
+          <span className="user-info">Witaj, {user?.email}</span>
           <NotificationBell />
           <button className="btn-logout" onClick={handleLogout}>
-            Logout
+            Wyloguj
           </button>
         </div>
       </nav>
@@ -44,7 +44,7 @@ export default function Layout({ children }) {
       </div>
 
       <footer className="footer">
-        <p>&copy; 2026 ISI Medical System. All rights reserved.</p>
+        <p>&copy; 2026 System Medyczny ISI. Wszelkie prawa zastrzeżone.</p>
       </footer>
     </div>
   );

@@ -34,7 +34,7 @@ export default function StaffDashboard() {
   return (
     <div className="staff-dashboard">
       <header className="dashboard-header">
-        <h1>Registration Staff Dashboard</h1>
+        <h1>Panel personelu rejestracji</h1>
       </header>
 
       <div className="tabs">
@@ -42,25 +42,25 @@ export default function StaffDashboard() {
           className={`tab ${activeTab === 'appointments' ? 'active' : ''}`}
           onClick={() => setActiveTab('appointments')}
         >
-          Appointments
+          Wizyty
         </button>
         <button
           className={`tab ${activeTab === 'patients' ? 'active' : ''}`}
           onClick={() => setActiveTab('patients')}
         >
-          Patients
+          Pacjenci
         </button>
       </div>
 
       {activeTab === 'appointments' && (
         <section className="appointments-section">
-          <h2>All Appointments</h2>
+          <h2>Wszystkie wizyty</h2>
           {loading ? (
-            <p>Loading...</p>
+            <p>Ładowanie...</p>
           ) : appointments.length > 0 ? (
             <AppointmentsList appointments={appointments} detailed={true} />
           ) : (
-            <p className="no-appointments">No appointments</p>
+            <p className="no-appointments">Brak wizyt</p>
           )}
         </section>
       )}
@@ -68,7 +68,7 @@ export default function StaffDashboard() {
       {activeTab === 'patients' && (
         <section className="patients-section">
           <div className="section-header">
-            <h2>Registered Patients ({patients.length})</h2>
+            <h2>Zarejestrowani pacjenci ({patients.length})</h2>
             <button
               className="btn-primary"
               onClick={() => setShowCreateModal(true)}
@@ -77,11 +77,11 @@ export default function StaffDashboard() {
             </button>
           </div>
           {loading ? (
-            <p>Loading...</p>
+            <p>Ładowanie...</p>
           ) : patients.length > 0 ? (
             <UsersList users={patients} />
           ) : (
-            <p className="no-data">No patients registered</p>
+            <p className="no-data">Brak zarejestrowanych pacjentów</p>
           )}
         </section>
       )}

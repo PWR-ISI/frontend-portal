@@ -26,7 +26,7 @@ function AppointmentDetailModal({ appointment, onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '540px' }}>
         <div className="modal-header">
-          <h2>Appointment Details</h2>
+          <h2>Szczegóły wizyty</h2>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
         <div className="modal-body" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -40,7 +40,7 @@ function AppointmentDetailModal({ appointment, onClose }) {
             </span>
           </div>
           {appointment.notes && (
-            <div><strong>Notes:</strong> {appointment.notes}</div>
+            <div><strong>Notatki:</strong> {appointment.notes}</div>
           )}
 
           <div style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.25rem' }}>
@@ -48,7 +48,7 @@ function AppointmentDetailModal({ appointment, onClose }) {
           </div>
         </div>
         <div className="modal-footer" style={{ padding: '1rem', textAlign: 'right' }}>
-          <button className="btn btn-secondary" onClick={onClose}>Close</button>
+          <button className="btn btn-secondary" onClick={onClose}>Zamknij</button>
         </div>
       </div>
     </div>

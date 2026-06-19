@@ -1,5 +1,12 @@
 import '../styles/components/UsersList.css';
 
+const ROLE_LABELS = {
+  patient: 'Pacjent',
+  doctor: 'Lekarz',
+  staff: 'Personel',
+  admin: 'Administrator',
+};
+
 export default function UsersList({ users, canDelete = false }) {
   const getRoleColor = (role) => {
     const colors = {
@@ -14,7 +21,7 @@ export default function UsersList({ users, canDelete = false }) {
   return (
     <div className="users-list">
       {users.length === 0 ? (
-        <p className="empty-state">No users found</p>
+        <p className="empty-state">Brak użytkowników</p>
       ) : (
         <div className="users-grid">
           {users.map(user => (
@@ -29,13 +36,13 @@ export default function UsersList({ users, canDelete = false }) {
                   className="user-role"
                   style={{ backgroundColor: getRoleColor(user.role) }}
                 >
-                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                  {ROLE_LABELS[user.role] || user.role}
                 </span>
               </div>
               <div className="user-actions">
-                <button className="btn-action btn-edit">Edit</button>
+                <button className="btn-action btn-edit">Edytuj</button>
                 {canDelete && (
-                  <button className="btn-action btn-delete">Delete</button>
+                  <button className="btn-action btn-delete">Usuń</button>
                 )}
               </div>
             </div>

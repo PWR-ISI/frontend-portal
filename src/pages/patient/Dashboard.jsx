@@ -60,7 +60,7 @@ export default function PatientDashboard() {
   };
 
   const handleCancelAppointment = async (appointmentId) => {
-    if (window.confirm('Are you sure you want to cancel this appointment?')) {
+    if (window.confirm('Czy na pewno chcesz odwołać tę wizytę?')) {
       try {
         await appointmentAPI.cancel(appointmentId);
         loadAppointments();
@@ -73,36 +73,36 @@ export default function PatientDashboard() {
   return (
     <div className="patient-dashboard">
       <header className="dashboard-header">
-        <h1>Welcome to Your Patient Portal</h1>
+        <h1>Witaj w portalu pacjenta</h1>
       </header>
 
       <section className="dashboard-section">
         <div className="user-card">
-          <h2>Your Profile</h2>
+          <h2>Twój profil</h2>
           <p><strong>Email:</strong> {user?.email}</p>
-          <p><strong>Name:</strong> {user?.first_name} {user?.last_name}</p>
-          <p><strong>Role:</strong> Patient</p>
+          <p><strong>Imię i nazwisko:</strong> {user?.first_name} {user?.last_name}</p>
+          <p><strong>Rola:</strong> Pacjent</p>
         </div>
       </section>
 
       <section className="dashboard-section">
-        <h2>Quick Actions</h2>
+        <h2>Szybkie akcje</h2>
         <div className="actions-grid">
-          <button className="action-btn" onClick={() => setShowBooking(true)}>Book Appointment</button>
+          <button className="action-btn" onClick={() => setShowBooking(true)}>Umów wizytę</button>
           <button className="action-btn" onClick={handleViewRecords}>
-            {showRecords ? 'Hide Records' : 'View Medical Records'}
+            {showRecords ? 'Ukryj dokumentację' : 'Zobacz dokumentację medyczną'}
           </button>
-          <button className="action-btn" disabled title="Coming soon">Contact Doctor</button>
+          <button className="action-btn" disabled title="Wkrótce">Skontaktuj się z lekarzem</button>
         </div>
       </section>
 
       {showRecords && (
         <section className="dashboard-section">
-          <h2>Medical Records</h2>
+          <h2>Dokumentacja medyczna</h2>
           {recordsLoading ? (
-            <p>Loading...</p>
+            <p>Ładowanie...</p>
           ) : records.length === 0 ? (
-            <p className="no-appointments">No medical records found</p>
+            <p className="no-appointments">Brak dokumentacji medycznej</p>
           ) : (
             <div className="records-list">
               {records.map(r => (
@@ -115,7 +115,7 @@ export default function PatientDashboard() {
                     <span className="record-date">{new Date(r.created_at).toLocaleDateString()}</span>
                   </div>
                   <a href={r.file_url} target="_blank" rel="noreferrer" className="record-download">
-                    Download
+                    Pobierz
                   </a>
                 </div>
               ))}
@@ -125,11 +125,11 @@ export default function PatientDashboard() {
       )}
 
       <section className="dashboard-section">
-        <h2>Upcoming Appointments</h2>
+        <h2>Nadchodzące wizyty</h2>
         {loading ? (
-          <p>Loading...</p>
+          <p>Ładowanie...</p>
         ) : appointments.length === 0 ? (
-          <p className="no-appointments">No upcoming appointments</p>
+          <p className="no-appointments">Brak nadchodzących wizyt</p>
         ) : (
           <AppointmentsList appointments={appointments} onCancel={handleCancelAppointment} />
         )}

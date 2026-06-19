@@ -3,14 +3,14 @@ import { notificationAPI } from '../api';
 import '../styles/components/NotificationBell.css';
 
 const TYPE_LABELS = {
-  appointment_confirmed: 'Appointment Confirmed',
-  appointment_cancelled: 'Appointment Cancelled',
-  appointment_reminder: 'Reminder',
-  payment_received: 'Payment Received',
-  payment_failed: 'Payment Failed',
-  medical_record_available: 'Record Available',
+  appointment_confirmed: 'Wizyta potwierdzona',
+  appointment_cancelled: 'Wizyta odwołana',
+  appointment_reminder: 'Przypomnienie',
+  payment_received: 'Płatność przyjęta',
+  payment_failed: 'Płatność nieudana',
+  medical_record_available: 'Nowy dokument',
   system_alert: 'Alert',
-  general: 'Notification',
+  general: 'Powiadomienie',
 };
 
 export default function NotificationBell() {
@@ -77,7 +77,7 @@ export default function NotificationBell() {
 
   return (
     <div className="notification-bell" ref={ref}>
-      <button className="bell-btn" onClick={handleToggle} aria-label="Notifications">
+      <button className="bell-btn" onClick={handleToggle} aria-label="Powiadomienia">
         <span className="bell-icon">🔔</span>
         {unreadCount > 0 && (
           <span className="bell-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
@@ -87,18 +87,18 @@ export default function NotificationBell() {
       {open && (
         <div className="notification-dropdown">
           <div className="notification-header">
-            <span className="notification-title">Notifications</span>
+            <span className="notification-title">Powiadomienia</span>
             {unreadCount > 0 && (
               <button className="mark-all-btn" onClick={handleMarkAllRead}>
-                Mark all read
+                Oznacz wszystkie
               </button>
             )}
           </div>
           <div className="notification-list">
             {loading ? (
-              <p className="notif-empty">Loading...</p>
+              <p className="notif-empty">Ładowanie...</p>
             ) : notifications.length === 0 ? (
-              <p className="notif-empty">No notifications</p>
+              <p className="notif-empty">Brak powiadomień</p>
             ) : (
               notifications.map(n => (
                 <div key={n.id} className={`notification-item ${n.is_read ? 'read' : 'unread'} ${expandedId === n.id ? 'expanded' : ''}`}>

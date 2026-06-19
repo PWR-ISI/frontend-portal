@@ -13,7 +13,7 @@ function ProtectedRoute({ children, requiredRole }) {
   const { user, loading } = useCognitoAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div>Ładowanie...</div>;
   }
 
   if (!user) {

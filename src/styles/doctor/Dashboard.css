@@ -85,3 +85,82 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Day-based schedule (click a day to expand its hours) */
+.schedule-days {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.schedule-day {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.schedule-day-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #f8f9fa;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  text-align: left;
+}
+
+.schedule-day-header:hover {
+  background: #eef7f1;
+}
+
+.schedule-day-header.open {
+  background: #eafaf1;
+}
+
+.schedule-day-label {
+  font-weight: 600;
+  color: #2c3e50;
+  text-transform: capitalize;
+  flex: 1;
+}
+
+.schedule-day-count {
+  color: #16a085;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.schedule-day-caret {
+  color: #999;
+  font-size: 12px;
+}
+
+.schedule-hours {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px;
+  background: #fff;
+}
+
+.hour-chip {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hour-chip.available {
+  background: #d4edda;
+  color: #155724;
+}
+
+.hour-chip.booked {
+  background: #f1f1f1;
+  color: #999;
+  text-decoration: line-through;
+}

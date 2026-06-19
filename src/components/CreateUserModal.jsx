@@ -2,6 +2,13 @@ import { useState } from 'react';
 import { userAPI } from '../api';
 import '../styles/components/Modal.css';
 
+const ROLE_LABELS = {
+  patient: 'Pacjent',
+  doctor: 'Lekarz',
+  staff: 'Personel',
+  admin: 'Administrator',
+};
+
 export default function CreateUserModal({ onClose, onSuccess, roles = ['patient', 'doctor', 'staff', 'admin'] }) {
   const [formData, setFormData] = useState({
     first_name: '',
@@ -125,7 +132,7 @@ export default function CreateUserModal({ onClose, onSuccess, roles = ['patient'
             >
               {roles.map(role => (
                 <option key={role} value={role}>
-                  {role.charAt(0).toUpperCase() + role.slice(1)}
+                  {ROLE_LABELS[role] || role}
                 </option>
               ))}
             </select>
