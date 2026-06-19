@@ -27,6 +27,7 @@ export default function BookAppointmentModal({ onClose, onSuccess }) {
 
   // Doctor search/selection
   const [facilities, setFacilities] = useState([]);
+  const [specializations, setSpecializations] = useState([]);
   const [filters, setFilters] = useState({ specialization: '', facility: '' });
   const [doctors, setDoctors] = useState([]);
   const [doctorsLoading, setDoctorsLoading] = useState(false);
@@ -36,6 +37,15 @@ export default function BookAppointmentModal({ onClose, onSuccess }) {
     facilityAPI.list()
       .then((res) => setFacilities(asList(res.data)))
       .catch(() => setFacilities([]));
+    // Build the specialization dropdown from the doctor catalog (distinct, sorted).
+    doctorAPI.search({})
+      .then((res) => {
+        const specs = [...new Set(
+          asList(res.data).map((d) => d.specialization).filter(Boolean)
+        )].sort((a, b) => a.localeCompare(b, 'pl'));
+        setSpecializations(specs);
+      })
+      .catch(() => setSpecializations([]));
   }, []);
 
   const searchDoctors = async () => {
@@ -147,13 +157,16 @@ export default function BookAppointmentModal({ onClose, onSuccess }) {
             <>
               <div className="form-group">
                 <label htmlFor="specialization">Specjalizacja</label>
-                <input
+                <select
                   id="specialization"
-                  type="text"
-                  placeholder="np. Kardiolog"
                   value={filters.specialization}
                   onChange={(e) => setFilters({ ...filters, specialization: e.target.value })}
-                />
+                >
+                  <option value="">-- Dowolna --</option>
+                  {specializations.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
               </div>
               <div className="form-group">
                 <label htmlFor="facility">Placówka</label>
