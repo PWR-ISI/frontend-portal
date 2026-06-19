@@ -2,6 +2,15 @@ import { useState, useEffect } from 'react';
 import { adminAPI, doctorAPI, facilityAPI } from '../api';
 import '../styles/components/Modal.css';
 
+// Standard medical specializations offered when adding a doctor (keeps names
+// consistent, which in turn powers the patient-side specialization dropdown).
+const SPECIALIZATIONS = [
+  'Alergolog', 'Anestezjolog', 'Chirurg', 'Dermatolog', 'Diabetolog', 'Endokrynolog',
+  'Gastrolog', 'Ginekolog', 'Internista', 'Kardiolog', 'Laryngolog', 'Neurolog',
+  'Okulista', 'Onkolog', 'Ortopeda', 'Pediatra', 'Psychiatra', 'Radiolog',
+  'Reumatolog', 'Urolog',
+];
+
 export default function AddDoctorModal({ onClose, onSuccess }) {
   const [form, setForm] = useState({
     first_name: '',
@@ -118,7 +127,12 @@ export default function AddDoctorModal({ onClose, onSuccess }) {
 
           <div className="form-group">
             <label htmlFor="specialization">Specjalizacja *</label>
-            <input id="specialization" name="specialization" type="text" value={form.specialization} onChange={change} required />
+            <select id="specialization" name="specialization" value={form.specialization} onChange={change} required>
+              <option value="">-- Wybierz specjalizację --</option>
+              {SPECIALIZATIONS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
             {fieldError('specialization') && <small className="error-message">{fieldError('specialization')}</small>}
           </div>
 

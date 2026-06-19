@@ -42,8 +42,9 @@ const medicalRecordApi = createServiceApi(MEDICAL_RECORD_SERVICE_URL);
 const notificationApi = createServiceApi(NOTIFICATION_SERVICE_URL);
 
 export const appointmentAPI = {
-  list: () => scheduleApi.get('/api/v1/appointments/'),
-  get: (id) => scheduleApi.get(`/api/v1/appointments/${id}/`),
+  // NOTE: schedule-service router uses trailing_slash=False -> no trailing slash here.
+  list: () => scheduleApi.get('/api/v1/appointments'),
+  get: (id) => scheduleApi.get(`/api/v1/appointments/${id}`),
   create: (data) => {
     const payload = {
       slot_id: data.slot_id,
@@ -54,9 +55,9 @@ export const appointmentAPI = {
     };
     if (data.facility_id) payload.facility_id = data.facility_id;
     if (data.notes) payload.notes = data.notes;
-    return scheduleApi.post('/api/v1/appointments/', payload);
+    return scheduleApi.post('/api/v1/appointments', payload);
   },
-  cancel: (id) => scheduleApi.post(`/api/v1/appointments/${id}/cancel/`),
+  cancel: (id) => scheduleApi.post(`/api/v1/appointments/${id}/cancel`),
 };
 
 export const scheduleAPI = {
