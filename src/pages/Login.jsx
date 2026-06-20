@@ -66,15 +66,6 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="login-roles">
-          <p className="roles-hint">Konta demonstracyjne:</p>
-          <ul>
-            <li><strong>Pacjent:</strong> patient@isi.test / Patient123!</li>
-            <li><strong>Lekarz:</strong> kardiolog@isi.test / Doctor123!</li>
-            <li><strong>Administrator:</strong> admin@isi.test / Admin123!</li>
-          </ul>
-        </div>
-
         <div className="login-links">
           <p>Nie masz konta? <Link to="/register">Zarejestruj się jako pacjent</Link></p>
         </div>

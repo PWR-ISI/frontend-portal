@@ -42,10 +42,11 @@ export default function BookAppointmentModal({ onClose, onSuccess, patients = nu
       .then((res) => setFacilities(asList(res.data)))
       .catch(() => setFacilities([]));
     // Build the specialization dropdown from the doctor catalog (distinct, sorted).
-    doctorAPI.search({})
-      .then((res) => {
+    // searchAll follows pagination so EVERY doctor's specialization is included.
+    doctorAPI.searchAll({})
+      .then((all) => {
         const specs = [...new Set(
-          asList(res.data).map((d) => d.specialization).filter(Boolean)
+          all.map((d) => d.specialization).filter(Boolean)
         )].sort((a, b) => a.localeCompare(b, 'pl'));
         setSpecializations(specs);
       })
@@ -59,8 +60,8 @@ export default function BookAppointmentModal({ onClose, onSuccess, patients = nu
       const params = {};
       if (filters.specialization) params.specialization = filters.specialization;
       if (filters.facility) params.facility = filters.facility;
-      const res = await doctorAPI.search(params);
-      setDoctors(asList(res.data));
+      // searchAll: return all matching doctors, not just the first paginated 10.
+      setDoctors(await doctorAPI.searchAll(params));
     } catch (err) {
       console.error('Failed to search doctors:', err);
       setDoctors([]);

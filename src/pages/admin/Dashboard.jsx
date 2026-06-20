@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { userAPI, appointmentAPI, doctorAPI, facilityAPI } from '../../api';
 import UsersList from '../../components/UsersList';
+import AppointmentsList from '../../components/AppointmentsList';
 import CreateUserModal from '../../components/CreateUserModal';
 import EditUserModal from '../../components/EditUserModal';
 import AddDoctorModal from '../../components/AddDoctorModal';
@@ -22,6 +23,16 @@ export default function AdminDashboard() {
   const [showAddFacility, setShowAddFacility] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
 
+  const handleCancelAppt = async (id, reason) => {
+    try { await appointmentAPI.cancel(id, reason); fetchData(); }
+    catch (e) { console.error('Cancel failed:', e); }
+  };
+
+  const handleCompleteAppt = async (id, summary) => {
+    try { await appointmentAPI.complete(id, summary); fetchData(); }
+    catch (e) { console.error('Complete failed:', e); }
+  };
+
   const handleDeleteUser = async (user) => {
     if (!window.confirm(`Usunąć użytkownika ${user.first_name} ${user.last_name} (${user.email})?`)) return;
     try {
@@ -38,8 +49,7 @@ export default function AdminDashboard() {
 
   const fetchDoctors = async () => {
     try {
-      const res = await doctorAPI.adminList();
-      setDoctors(asList(res.data));
+      setDoctors(await doctorAPI.adminListAll());
     } catch (e) {
       console.error('Failed to fetch doctors:', e);
     }
@@ -57,16 +67,17 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
     // Fetch independently so one failing endpoint doesn't blank the page.
+    // userAPI.listAll / doctorAPI.adminListAll follow pagination and return arrays.
     const [usersRes, apptRes, docRes, facRes] = await Promise.allSettled([
-      userAPI.list(),
+      userAPI.listAll(),
       appointmentAPI.list(),
-      doctorAPI.adminList(),
+      doctorAPI.adminListAll(),
       facilityAPI.list(),
     ]);
 
-    const u = usersRes.status === 'fulfilled' ? asList(usersRes.value.data) : [];
+    const u = usersRes.status === 'fulfilled' ? usersRes.value : [];
     const a = apptRes.status === 'fulfilled' ? asList(apptRes.value.data) : [];
-    const d = docRes.status === 'fulfilled' ? asList(docRes.value.data) : [];
+    const d = docRes.status === 'fulfilled' ? docRes.value : [];
     const f = facRes.status === 'fulfilled' ? asList(facRes.value.data) : [];
     setUsers(u);
     setAppointments(a);
@@ -101,6 +112,7 @@ export default function AdminDashboard() {
       <div className="tabs">
         <button className={`tab ${activeTab === 'doctors' ? 'active' : ''}`} onClick={() => setActiveTab('doctors')}>Lekarze</button>
         <button className={`tab ${activeTab === 'facilities' ? 'active' : ''}`} onClick={() => setActiveTab('facilities')}>Placówki</button>
+        <button className={`tab ${activeTab === 'appointments' ? 'active' : ''}`} onClick={() => setActiveTab('appointments')}>Wizyty</button>
         <button className={`tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Użytkownicy</button>
         <button className={`tab ${activeTab === 'system' ? 'active' : ''}`} onClick={() => setActiveTab('system')}>System</button>
       </div>
@@ -161,6 +173,21 @@ export default function AdminDashboard() {
             </div>
           ) : (
             <p className="no-data">Brak placówek. Dodaj pierwszą.</p>
+          )}
+        </section>
+      )}
+
+      {activeTab === 'appointments' && (
+        <section className="users-section">
+          <div className="section-header">
+            <h2>Wszystkie wizyty ({appointments.length})</h2>
+          </div>
+          {loading ? (
+            <p>Ładowanie...</p>
+          ) : appointments.length > 0 ? (
+            <AppointmentsList appointments={appointments} onCancel={handleCancelAppt} onComplete={handleCompleteAppt} />
+          ) : (
+            <p className="no-data">Brak wizyt w systemie</p>
           )}
         </section>
       )}

@@ -41,6 +41,22 @@ const facilityApi = createServiceApi(FACILITY_SERVICE_URL);
 const medicalRecordApi = createServiceApi(MEDICAL_RECORD_SERVICE_URL);
 const notificationApi = createServiceApi(NOTIFICATION_SERVICE_URL);
 
+// DRF list endpoints paginate at PAGE_SIZE=10. To show *all* rows (users, doctors)
+// we follow the `next` links and concatenate every page. Returns a plain array.
+async function fetchAllPages(apiInstance, path, params = {}) {
+  const out = [];
+  let res = await apiInstance.get(path, { params: { ...params, page_size: 1000 } });
+  // Guard against a misbehaving `next` loop.
+  for (let guard = 0; guard < 100; guard += 1) {
+    const d = res.data;
+    if (Array.isArray(d)) { out.push(...d); break; }
+    out.push(...(d.results || []));
+    if (!d.next) break;
+    res = await apiInstance.get(d.next);
+  }
+  return out;
+}
+
 export const appointmentAPI = {
   // NOTE: schedule-service router uses trailing_slash=False -> no trailing slash here.
   list: () => scheduleApi.get('/api/v1/appointments'),
@@ -83,6 +99,10 @@ export const doctorAPI = {
   // Patient/admin search by specialization / facility / free-text.
   search: (params) => facilityApi.get('/api/v2/doctors/', { params }),
   adminList: () => facilityApi.get('/api/v2/doctors/'),
+  // Same as search/adminList but follows pagination so EVERY doctor is returned
+  // (otherwise only the first 10 are found/visible). Returns a plain array.
+  searchAll: (params = {}) => fetchAllPages(facilityApi, '/api/v2/doctors/', params),
+  adminListAll: () => fetchAllPages(facilityApi, '/api/v2/doctors/'),
   // Create the doctor profile (multipart: text fields + optional photo).
   createProfile: (formData) =>
     facilityApi.post('/api/v2/doctors/', formData, {
@@ -103,6 +123,8 @@ export const adminAPI = {
 
 export const userAPI = {
   list: () => authApi.get('/users/'),
+  // Every user across all pages (the admin list must show all 19+, not just 10).
+  listAll: () => fetchAllPages(authApi, '/users/'),
   get: (id) => authApi.get(`/users/${id}/`),
   create: (data) => adminAPI.createStaff(data),
   update: (id, data) => authApi.patch(`/users/${id}/`, data),
