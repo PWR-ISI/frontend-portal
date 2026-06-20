@@ -15,25 +15,70 @@ export function CognitoAuthProvider({ children }) {
   const checkAuthStatus = async () => {
     try {
       const token = localStorage.getItem('id_token');
-      if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setUser({
-          email: payload.email || localStorage.getItem('user_email'),
-          first_name: payload.given_name || localStorage.getItem('user_first_name'),
-          last_name: payload.family_name || localStorage.getItem('user_last_name'),
-          role: payload['custom:role'] || localStorage.getItem('user_role') || 'patient',
-          id_token: token,
-          access_token: localStorage.getItem('access_token'),
-          refresh_token: localStorage.getItem('refresh_token'),
-        });
+      if (!token) return;
+
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const isExpired = payload.exp && payload.exp * 1000 < Date.now();
+
+      if (isExpired) {
+        const refreshed = await tryRefreshToken();
+        if (!refreshed) {
+          clearAuth();
+        }
+        return;
       }
+
+      setUser({
+        email: payload.email || localStorage.getItem('user_email'),
+        first_name: payload.given_name || localStorage.getItem('user_first_name'),
+        last_name: payload.family_name || localStorage.getItem('user_last_name'),
+        role: payload['custom:role'] || localStorage.getItem('user_role') || 'patient',
+        id_token: token,
+        access_token: localStorage.getItem('access_token'),
+        refresh_token: localStorage.getItem('refresh_token'),
+      });
     } catch (err) {
       console.error('Auth check error:', err);
-      localStorage.removeItem('id_token');
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+      clearAuth();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const clearAuth = () => {
+    ['id_token', 'access_token', 'refresh_token',
+      'user_email', 'user_first_name', 'user_last_name', 'user_role'].forEach(
+      (k) => localStorage.removeItem(k)
+    );
+    setUser(null);
+  };
+
+  const tryRefreshToken = async () => {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) return false;
+    try {
+      const response = await fetch(`${AUTH_SERVICE_URL}/auth/refresh/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+      if (!response.ok) return false;
+      const data = await response.json();
+      localStorage.setItem('id_token', data.id_token);
+      if (data.access_token) localStorage.setItem('access_token', data.access_token);
+      const payload = JSON.parse(atob(data.id_token.split('.')[1]));
+      setUser({
+        email: payload.email || localStorage.getItem('user_email'),
+        first_name: payload.given_name || localStorage.getItem('user_first_name'),
+        last_name: payload.family_name || localStorage.getItem('user_last_name'),
+        role: payload['custom:role'] || localStorage.getItem('user_role') || 'patient',
+        id_token: data.id_token,
+        access_token: data.access_token || localStorage.getItem('access_token'),
+        refresh_token: refreshToken,
+      });
+      return true;
+    } catch {
+      return false;
     }
   };
 

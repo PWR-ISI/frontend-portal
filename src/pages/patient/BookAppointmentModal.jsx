@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCognitoAuth } from '../../CognitoAuthContext';
-import { appointmentAPI, scheduleAPI, doctorAPI, facilityAPI } from '../../api';
+import { appointmentAPI, scheduleAPI, doctorAPI, facilityAPI, paymentAPI } from '../../api';
 import '../../styles/patient/BookAppointmentModal.css';
 
 const asList = (data) => (Array.isArray(data) ? data : (data?.results || []));
@@ -131,7 +131,9 @@ export default function BookAppointmentModal({ onClose, onSuccess, patients = nu
       const facilityId = selectedSlot.facility_id &&
         selectedSlot.facility_id !== '00000000-0000-0000-0000-000000000000'
         ? selectedSlot.facility_id : null;
-      const res = await appointmentAPI.create({
+
+      // Step 1: create the appointment in schedule-service
+      const apptRes = await appointmentAPI.create({
         slot_id: selectedSlot.id,
         patient_id: patientId,
         doctor_id: selectedSlot.doctor_id,
@@ -140,12 +142,25 @@ export default function BookAppointmentModal({ onClose, onSuccess, patients = nu
         scheduled_end: selectedSlot.end_time,
         notes: formData.notes,
       });
-      // When online payments are enabled the backend returns a PayU redirect.
-      const redirect = res?.data?.redirect_url;
-      if (redirect) {
-        window.location.href = redirect;
-        return;
+
+      const appointmentId = apptRes?.data?.id;
+
+      // Step 2: initiate payment in payment-service — response contains PayU redirect URL
+      if (appointmentId && !staffMode) {
+        const payRes = await paymentAPI.createOrder({
+          appointment_id: appointmentId,
+          patient_id: patientId,
+          amount: selectedSlot.price || '100.00',
+          currency: 'PLN',
+          description: `Wizyta u Dr ${selectedDoctor.first_name} ${selectedDoctor.last_name}`,
+        });
+        const redirect = payRes?.data?.redirect_url;
+        if (redirect) {
+          window.location.href = redirect;
+          return;
+        }
       }
+
       setSuccessMessage('Wizyta zarezerwowana!');
       setTimeout(() => onSuccess(), 1000);
     } catch (err) {

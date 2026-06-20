@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCognitoAuth } from '../CognitoAuthContext';
 import '../styles/Login.css';
@@ -9,7 +9,13 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn } = useCognitoAuth();
+  const { signIn, user, loading: authLoading } = useCognitoAuth();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate(`/${user.role.toLowerCase()}/dashboard`, { replace: true });
+    }
+  }, [user, authLoading, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

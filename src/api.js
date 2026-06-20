@@ -6,6 +6,7 @@ const AUTH_SERVICE_URL = import.meta.env.VITE_AUTH_SERVICE_URL || 'http://localh
 const FACILITY_SERVICE_URL = import.meta.env.VITE_FACILITY_SERVICE_URL || 'http://localhost:8004';
 const MEDICAL_RECORD_SERVICE_URL = import.meta.env.VITE_MEDICAL_RECORD_SERVICE_URL || 'http://localhost:8005';
 const NOTIFICATION_SERVICE_URL = import.meta.env.VITE_NOTIFICATION_SERVICE_URL || 'http://localhost:8006';
+const PAYMENT_SERVICE_URL = import.meta.env.VITE_PAYMENT_SERVICE_URL || 'http://localhost:8007';
 
 const createServiceApi = (baseURL) => {
   const instance = axios.create({
@@ -40,6 +41,7 @@ const authApi = createServiceApi(AUTH_SERVICE_URL);
 const facilityApi = createServiceApi(FACILITY_SERVICE_URL);
 const medicalRecordApi = createServiceApi(MEDICAL_RECORD_SERVICE_URL);
 const notificationApi = createServiceApi(NOTIFICATION_SERVICE_URL);
+const paymentApi = createServiceApi(PAYMENT_SERVICE_URL);
 
 // DRF list endpoints paginate at PAGE_SIZE=10. To show *all* rows (users, doctors)
 // we follow the `next` links and concatenate every page. Returns a plain array.
@@ -156,6 +158,14 @@ export const notificationAPI = {
   unreadCount: () => notificationApi.get('/api/v2/notifications/unread_count/'),
   markRead: (id) => notificationApi.put(`/api/v2/notifications/${id}/read/`),
   markAllRead: () => notificationApi.put('/api/v2/notifications/mark_all_as_read/'),
+};
+
+export const paymentAPI = {
+  createOrder: (data) => paymentApi.post('/api/payments/orders/', data),
+  getOrder: (id) => paymentApi.get(`/api/payments/orders/${id}/`),
+  listOrders: (patientId) => paymentApi.get('/api/payments/orders/', { params: { patient_id: patientId } }),
+  getPayment: (id) => paymentApi.get(`/api/payments/payments/${id}/`),
+  refund: (paymentId) => paymentApi.post(`/api/payments/payments/${paymentId}/refund/`),
 };
 
 export const getTokenRole = () => {
