@@ -85,8 +85,15 @@ export default function BookAppointmentModal({ onClose, onSuccess, patients = nu
     if (date && selectedDoctor) {
       setSlotsLoading(true);
       try {
-        const response = await scheduleAPI.getAvailableSlots(selectedDoctor.user_id, date);
-        setSlots(asList(response.data));
+        // Fetch ALL the doctor's available slots and filter to the chosen local day.
+        // (Filtering client-side avoids the server's UTC-date filter dropping slots that
+        // fall on the patient's local day but a different UTC day.)
+        const response = await scheduleAPI.getAvailableSlotsAll(selectedDoctor.user_id);
+        const localDay = (iso) => new Date(iso).toLocaleDateString('en-CA');
+        const daySlots = asList(response.data)
+          .filter((s) => localDay(s.start_time) === date)
+          .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+        setSlots(daySlots);
       } catch (err) {
         console.error('Failed to load slots:', err);
         setSlots([]);

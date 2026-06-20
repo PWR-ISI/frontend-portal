@@ -16,7 +16,7 @@ export default function Layout({ children }) {
     const labels = {
       patient: 'Portal pacjenta',
       doctor: 'Portal lekarza',
-      staff: 'Portal personelu',
+      staff: 'Portal recepcjonisty',
       admin: 'Portal administratora',
     };
     return labels[role] || 'Portal';

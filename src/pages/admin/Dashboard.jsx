@@ -37,6 +37,17 @@ export default function AdminDashboard() {
     if (!window.confirm(`Usunąć użytkownika ${user.first_name} ${user.last_name} (${user.email})?`)) return;
     try {
       await userAPI.delete(user.id);
+      // A doctor's catalog profile lives in facility-staff — remove it too so the doctor
+      // doesn't linger in the "Lekarze" tab after the account is gone.
+      if (user.role === 'doctor' && user.cognito_sub) {
+        try {
+          const profiles = await doctorAPI.searchAll();
+          const prof = profiles.find((d) => d.user_id === user.cognito_sub);
+          if (prof) await doctorAPI.deleteProfile(prof.id);
+        } catch (e) {
+          console.error('Failed to delete doctor profile:', e);
+        }
+      }
       fetchData();
     } catch (e) {
       window.alert(e.response?.data?.detail || 'Nie udało się usunąć użytkownika.');

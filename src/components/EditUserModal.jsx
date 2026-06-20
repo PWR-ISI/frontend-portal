@@ -5,7 +5,7 @@ import '../styles/components/Modal.css';
 const ROLES = [
   { value: 'patient', label: 'Pacjent' },
   { value: 'doctor', label: 'Lekarz' },
-  { value: 'staff', label: 'Personel' },
+  { value: 'staff', label: 'Recepcjonista' },
   { value: 'admin', label: 'Administrator' },
 ];
 

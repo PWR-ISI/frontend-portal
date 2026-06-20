@@ -3,7 +3,7 @@ import '../styles/components/UsersList.css';
 const ROLE_LABELS = {
   patient: 'Pacjent',
   doctor: 'Lekarz',
-  staff: 'Personel',
+  staff: 'Recepcjonista',
   admin: 'Administrator',
 };
 
@@ -27,7 +27,9 @@ export default function UsersList({ users, canDelete = false, onEdit, onDelete }
           {users.map(user => (
             <div key={user.id} className="user-card">
               <div className="user-avatar">
-                {user.first_name?.charAt(0) || user.email?.charAt(0).toUpperCase()}
+                {user.avatar
+                  ? <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                  : (user.first_name?.charAt(0) || user.email?.charAt(0).toUpperCase())}
               </div>
               <div className="user-info">
                 <h3>{user.first_name} {user.last_name}</h3>

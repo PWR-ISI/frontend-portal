@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { userAPI, adminAPI, doctorAPI, facilityAPI } from '../api';
+import { adminAPI, doctorAPI, facilityAPI } from '../api';
 import '../styles/components/Modal.css';
 
 const ROLE_LABELS = {
   patient: 'Pacjent',
   doctor: 'Lekarz',
-  staff: 'Personel',
+  staff: 'Recepcjonista',
   admin: 'Administrator',
 };
 
@@ -26,12 +26,15 @@ export default function CreateUserModal({ onClose, onSuccess, roles = ['patient'
     role: 'patient',
     specialization: '',
     facility_id: '',
+    license_number: '',
   });
+  const [photo, setPhoto] = useState(null);
   const [facilities, setFacilities] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const isDoctor = formData.role === 'doctor';
+  const isStaff = formData.role === 'staff';
 
   // Facilities are needed when provisioning a doctor (the doctor profile must reference one).
   useEffect(() => {
@@ -42,10 +45,7 @@ export default function CreateUserModal({ onClose, onSuccess, roles = ['patient'
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -64,17 +64,31 @@ export default function CreateUserModal({ onClose, onSuccess, roles = ['patient'
     setLoading(true);
     try {
       // 1) Create the login account (Cognito + DB) in auth-identity.
-      const acc = await adminAPI.createStaff({
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
-      });
+      //    A receptionist's avatar is attached here (multipart -> UserProfile.avatar).
+      let accountPayload;
+      if (isStaff && photo) {
+        accountPayload = new FormData();
+        accountPayload.append('first_name', formData.first_name);
+        accountPayload.append('last_name', formData.last_name);
+        accountPayload.append('email', formData.email);
+        accountPayload.append('password', formData.password);
+        accountPayload.append('role', formData.role);
+        accountPayload.append('photo', photo);
+      } else {
+        accountPayload = {
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+        };
+      }
+      const acc = await adminAPI.createStaff(accountPayload);
 
       // 2) For a doctor, also create the facility profile so the catalog recognises them.
       //    The profile's user_id MUST equal the account's id (the JWT `sub`), otherwise the
       //    doctor logs in but the system does not link them to a doctor profile.
+      //    License number + photo are attached to the doctor's catalog profile (as in AddDoctorModal).
       if (isDoctor) {
         const userId = acc.data?.user_id;
         const fd = new FormData();
@@ -84,13 +98,16 @@ export default function CreateUserModal({ onClose, onSuccess, roles = ['patient'
         fd.append('last_name', formData.last_name);
         fd.append('specialization', formData.specialization);
         fd.append('facility_id', formData.facility_id);
+        if (formData.license_number) fd.append('license_number', formData.license_number);
+        if (photo) fd.append('photo', photo);
         await doctorAPI.createProfile(fd);
       }
 
       setFormData({
         first_name: '', last_name: '', email: '', password: '',
-        role: 'patient', specialization: '', facility_id: '',
+        role: 'patient', specialization: '', facility_id: '', license_number: '',
       });
+      setPhoto(null);
       onSuccess();
       onClose();
     } catch (err) {
@@ -129,7 +146,7 @@ export default function CreateUserModal({ onClose, onSuccess, roles = ['patient'
 
           <div className="form-group">
             <label htmlFor="password">Hasło *</label>
-            <input id="password" name="password" type="password" value={formData.password} onChange={handleChange} required />
+            <input id="password" name="password" type="password" value={formData.password} onChange={handleChange} required minLength={8} />
           </div>
 
           <div className="form-group">
@@ -161,7 +178,18 @@ export default function CreateUserModal({ onClose, onSuccess, roles = ['patient'
                   ))}
                 </select>
               </div>
+              <div className="form-group">
+                <label htmlFor="license_number">Nr licencji</label>
+                <input id="license_number" name="license_number" type="text" value={formData.license_number} onChange={handleChange} />
+              </div>
             </>
+          )}
+
+          {(isDoctor || isStaff) && (
+            <div className="form-group">
+              <label htmlFor="photo">Zdjęcie profilowe (opcjonalnie)</label>
+              <input id="photo" name="photo" type="file" accept="image/*" onChange={(e) => setPhoto(e.target.files[0] || null)} />
+            </div>
           )}
 
           <div className="modal-actions">

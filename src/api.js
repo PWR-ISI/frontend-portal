@@ -84,6 +84,10 @@ export const scheduleAPI = {
   list: () => scheduleApi.get('/api/v1/doctor-schedules/'),
   getAvailableSlots: (doctorId, date) =>
     scheduleApi.get('/api/v1/slots', { params: { doctor_id: doctorId, from: date, to: date } }),
+  // All AVAILABLE slots for a doctor (no date filter). The patient view filters by the
+  // local calendar day client-side, which avoids UTC-vs-local date-boundary mismatches.
+  getAvailableSlotsAll: (doctorId) =>
+    scheduleApi.get('/api/v1/slots', { params: { doctor_id: doctorId } }),
   getDoctorSlots: (doctorId) =>
     scheduleApi.get('/api/v1/slots', { params: { doctor_id: doctorId } }),
   // All slots for a doctor on a given day (any status) — to know which hours are taken.
@@ -108,6 +112,7 @@ export const doctorAPI = {
     facilityApi.post('/api/v2/doctors/', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
+  deleteProfile: (id) => facilityApi.delete(`/api/v2/doctors/${id}/`),
 };
 
 export const facilityAPI = {
@@ -118,7 +123,11 @@ export const facilityAPI = {
 
 // Admin account provisioning lives in auth-identity-service.
 export const adminAPI = {
-  createStaff: (data) => authApi.post('/admin/staff/', data),
+  // Accepts a plain object (JSON) or FormData (when an avatar photo is attached).
+  createStaff: (data) =>
+    data instanceof FormData
+      ? authApi.post('/admin/staff/', data, { headers: { 'Content-Type': 'multipart/form-data' } })
+      : authApi.post('/admin/staff/', data),
 };
 
 export const userAPI = {

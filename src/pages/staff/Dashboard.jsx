@@ -51,7 +51,7 @@ export default function StaffDashboard() {
   return (
     <div className="staff-dashboard">
       <header className="dashboard-header">
-        <h1>Panel personelu rejestracji</h1>
+        <h1>Panel recepcjonisty</h1>
       </header>
 
       <div className="tabs">
