@@ -59,6 +59,11 @@ export default function PatientDashboard() {
     }
   };
 
+  // Placeholder — online payment (PayU) will be wired in later.
+  const handlePay = () => {
+    window.alert('Płatność online będzie dostępna wkrótce.');
+  };
+
   const handleCancelAppointment = async (appointmentId, reason) => {
     try {
       await appointmentAPI.cancel(appointmentId, reason);
@@ -90,7 +95,6 @@ export default function PatientDashboard() {
           <button className="action-btn" onClick={handleViewRecords}>
             {showRecords ? 'Ukryj dokumentację' : 'Zobacz dokumentację medyczną'}
           </button>
-          <button className="action-btn" disabled title="Wkrótce">Skontaktuj się z lekarzem</button>
         </div>
       </section>
 
@@ -129,7 +133,7 @@ export default function PatientDashboard() {
         ) : appointments.length === 0 ? (
           <p className="no-appointments">Brak nadchodzących wizyt</p>
         ) : (
-          <AppointmentsList appointments={appointments} onCancel={handleCancelAppointment} />
+          <AppointmentsList appointments={appointments} onCancel={handleCancelAppointment} onPay={handlePay} />
         )}
       </section>
 

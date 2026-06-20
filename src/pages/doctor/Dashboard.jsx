@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { appointmentAPI, scheduleAPI } from '../../api';
 import AppointmentsList from '../../components/AppointmentsList';
+import CreateSlotsModal from '../../components/CreateSlotsModal';
+import AddMedicalRecordModal from '../../components/AddMedicalRecordModal';
 import '../../styles/doctor/Dashboard.css';
 
 const asList = (d) => (Array.isArray(d) ? d : (d?.results || []));
@@ -24,6 +26,8 @@ export default function DoctorDashboard() {
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openDay, setOpenDay] = useState(null);
+  const [showCreateSlots, setShowCreateSlots] = useState(false);
+  const [recordFor, setRecordFor] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -62,6 +66,7 @@ export default function DoctorDashboard() {
   };
 
   const active = appointments.filter((a) => ['scheduled', 'paid'].includes(a.status));
+  const cancelled = appointments.filter((a) => a.status === 'cancelled');
   const todayAppointments = active.filter(
     (a) => new Date(a.appointment_date).toDateString() === new Date().toDateString()
   );
@@ -93,7 +98,7 @@ export default function DoctorDashboard() {
         {loading ? (
           <p>Ładowanie...</p>
         ) : todayAppointments.length > 0 ? (
-          <AppointmentsList appointments={todayAppointments} onCancel={handleCancel} onComplete={handleComplete} />
+          <AppointmentsList appointments={todayAppointments} onCancel={handleCancel} onComplete={handleComplete} onAddRecord={setRecordFor} />
         ) : (
           <p className="no-appointments">Brak wizyt zaplanowanych na dziś</p>
         )}
@@ -104,14 +109,28 @@ export default function DoctorDashboard() {
         {loading ? (
           <p>Ładowanie...</p>
         ) : active.length > 0 ? (
-          <AppointmentsList appointments={active} onCancel={handleCancel} onComplete={handleComplete} />
+          <AppointmentsList appointments={active} onCancel={handleCancel} onComplete={handleComplete} onAddRecord={setRecordFor} />
         ) : (
           <p className="no-appointments">Brak nadchodzących wizyt</p>
         )}
       </section>
 
+      <section className="cancelled-appointments">
+        <h2>Odwołane wizyty ({cancelled.length})</h2>
+        {loading ? (
+          <p>Ładowanie...</p>
+        ) : cancelled.length > 0 ? (
+          <AppointmentsList appointments={cancelled} />
+        ) : (
+          <p className="no-appointments">Brak odwołanych wizyt</p>
+        )}
+      </section>
+
       <section className="schedule-section">
-        <h2>Mój grafik — wybierz dzień ({days.length})</h2>
+        <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ margin: 0 }}>Mój grafik — wybierz dzień ({days.length})</h2>
+          <button className="btn-primary" onClick={() => setShowCreateSlots(true)}>+ Dodaj wolne terminy</button>
+        </div>
         {loading ? (
           <p>Ładowanie...</p>
         ) : days.length === 0 ? (
@@ -149,6 +168,20 @@ export default function DoctorDashboard() {
           </div>
         )}
       </section>
+
+      {showCreateSlots && (
+        <CreateSlotsModal
+          onClose={() => setShowCreateSlots(false)}
+          onSuccess={fetchData}
+        />
+      )}
+      {recordFor && (
+        <AddMedicalRecordModal
+          appointment={recordFor}
+          onClose={() => setRecordFor(null)}
+          onSuccess={() => setRecordFor(null)}
+        />
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { userAPI, appointmentAPI, doctorAPI, facilityAPI } from '../../api';
 import UsersList from '../../components/UsersList';
 import CreateUserModal from '../../components/CreateUserModal';
+import EditUserModal from '../../components/EditUserModal';
 import AddDoctorModal from '../../components/AddDoctorModal';
 import AddFacilityModal from '../../components/AddFacilityModal';
 import '../../styles/admin/Dashboard.css';
@@ -19,6 +20,17 @@ export default function AdminDashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAddDoctor, setShowAddDoctor] = useState(false);
   const [showAddFacility, setShowAddFacility] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+
+  const handleDeleteUser = async (user) => {
+    if (!window.confirm(`Usunąć użytkownika ${user.first_name} ${user.last_name} (${user.email})?`)) return;
+    try {
+      await userAPI.delete(user.id);
+      fetchData();
+    } catch (e) {
+      window.alert(e.response?.data?.detail || 'Nie udało się usunąć użytkownika.');
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -160,7 +172,7 @@ export default function AdminDashboard() {
             <button className="btn-primary" onClick={() => setShowCreateModal(true)}>+ Utwórz użytkownika</button>
           </div>
           {loading ? <p>Ładowanie...</p> : users.length > 0 ? (
-            <UsersList users={users} canDelete={true} />
+            <UsersList users={users} canDelete={true} onEdit={setEditingUser} onDelete={handleDeleteUser} />
           ) : (
             <p className="no-data">Brak użytkowników</p>
           )}
@@ -180,6 +192,9 @@ export default function AdminDashboard() {
 
       {showCreateModal && (
         <CreateUserModal onClose={() => setShowCreateModal(false)} onSuccess={fetchData} />
+      )}
+      {editingUser && (
+        <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} onSuccess={fetchData} />
       )}
       {showAddDoctor && (
         <AddDoctorModal onClose={() => setShowAddDoctor(false)} onSuccess={() => { setShowAddDoctor(false); fetchDoctors(); }} />

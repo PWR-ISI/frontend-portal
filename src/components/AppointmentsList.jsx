@@ -108,7 +108,7 @@ function ActionModal({ action, onClose, onConfirm }) {
   );
 }
 
-export default function AppointmentsList({ appointments, onCancel, onComplete }) {
+export default function AppointmentsList({ appointments, onCancel, onComplete, onPay, onAddRecord }) {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [action, setAction] = useState(null); // { type: 'cancel'|'complete', appointment }
 
@@ -121,6 +121,7 @@ export default function AppointmentsList({ appointments, onCancel, onComplete })
   const getStatusClass = (status) => `status ${(status || '').toLowerCase()}`;
   const canCancel = (s) => s === 'scheduled' || s === 'paid' || s === 'pending_payment';
   const canComplete = (s) => s === 'scheduled' || s === 'paid';
+  const canPay = (s) => s === 'scheduled' || s === 'pending_payment';
 
   const runAction = async (id, text) => {
     const handler = action.type === 'cancel' ? onCancel : onComplete;
@@ -159,6 +160,16 @@ export default function AppointmentsList({ appointments, onCancel, onComplete })
                     <button className="btn-action btn-view" onClick={() => setSelectedAppointment(appointment)}>
                       Szczegóły
                     </button>
+                    {onPay && canPay(appointment.status) && (
+                      <button className="btn-action btn-pay" onClick={() => onPay(appointment)}>
+                        Opłać
+                      </button>
+                    )}
+                    {onAddRecord && (
+                      <button className="btn-action btn-doc" onClick={() => onAddRecord(appointment)}>
+                        Dokument
+                      </button>
+                    )}
                     {onComplete && canComplete(appointment.status) && (
                       <button className="btn-action btn-complete" onClick={() => setAction({ type: 'complete', appointment })}>
                         Zakończ

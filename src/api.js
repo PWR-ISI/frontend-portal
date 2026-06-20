@@ -70,6 +70,12 @@ export const scheduleAPI = {
     scheduleApi.get('/api/v1/slots', { params: { doctor_id: doctorId, from: date, to: date } }),
   getDoctorSlots: (doctorId) =>
     scheduleApi.get('/api/v1/slots', { params: { doctor_id: doctorId } }),
+  // All slots for a doctor on a given day (any status) — to know which hours are taken.
+  getSlotsForDay: (doctorId, date) =>
+    scheduleApi.get('/api/v1/slots', { params: { doctor_id: doctorId, from: date, to: date, status: 'all' } }),
+  // Doctor creates a free slot for themselves (backend forces doctor_id from the token).
+  createSlot: ({ doctor_id, facility_id, start_time, end_time }) =>
+    scheduleApi.post('/api/v1/slots', { doctor_id, facility_id, start_time, end_time }),
 };
 
 // Doctor directory lives in facility-staff-service (paginated DRF responses).
@@ -99,11 +105,19 @@ export const userAPI = {
   list: () => authApi.get('/users/'),
   get: (id) => authApi.get(`/users/${id}/`),
   create: (data) => adminAPI.createStaff(data),
+  update: (id, data) => authApi.patch(`/users/${id}/`, data),
+  delete: (id) => authApi.delete(`/users/${id}/`),
 };
 
 export const medicalRecordAPI = {
   list: (params) => medicalRecordApi.get('/api/v2/records/', { params }),
   get: (id) => medicalRecordApi.get(`/api/v2/records/${id}/`),
+  // Doctor/clerk adds a document for a patient (multipart: file + patient_id + type + desc).
+  // medical-record router uses trailing slashes (APPEND_SLASH) -> keep the slash.
+  upload: (formData) =>
+    medicalRecordApi.post('/api/v2/records/upload/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 };
 
 export const notificationAPI = {

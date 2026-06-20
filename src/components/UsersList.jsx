@@ -7,7 +7,7 @@ const ROLE_LABELS = {
   admin: 'Administrator',
 };
 
-export default function UsersList({ users, canDelete = false }) {
+export default function UsersList({ users, canDelete = false, onEdit, onDelete }) {
   const getRoleColor = (role) => {
     const colors = {
       patient: '#3498db',
@@ -40,9 +40,9 @@ export default function UsersList({ users, canDelete = false }) {
                 </span>
               </div>
               <div className="user-actions">
-                <button className="btn-action btn-edit">Edytuj</button>
+                <button className="btn-action btn-edit" onClick={() => onEdit && onEdit(user)}>Edytuj</button>
                 {canDelete && (
-                  <button className="btn-action btn-delete">Usuń</button>
+                  <button className="btn-action btn-delete" onClick={() => onDelete && onDelete(user)}>Usuń</button>
                 )}
               </div>
             </div>
