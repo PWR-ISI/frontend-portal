@@ -162,6 +162,7 @@ export const notificationAPI = {
 
 export const paymentAPI = {
   createOrder: (data) => paymentApi.post('/api/payments/orders/', data),
+  createOrderWithToken: (data) => paymentApi.post('/api/payments/orders/token/', data),
   getOrder: (id) => paymentApi.get(`/api/payments/orders/${id}/`),
   listOrders: (patientId) => paymentApi.get('/api/payments/orders/', { params: { patient_id: patientId } }),
   getPayment: (id) => paymentApi.get(`/api/payments/payments/${id}/`),

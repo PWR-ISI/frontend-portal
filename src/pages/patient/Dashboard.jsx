@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useCognitoAuth } from '../../CognitoAuthContext';
-import { appointmentAPI, medicalRecordAPI, doctorAPI, paymentAPI } from '../../api';
+import { appointmentAPI, medicalRecordAPI, doctorAPI } from '../../api';
 import AppointmentsList from '../../components/AppointmentsList';
 import BookAppointmentModal from './BookAppointmentModal';
+import PaymentModal from '../../components/PaymentModal';
 import '../../styles/patient/Dashboard.css';
 
 export default function PatientDashboard() {
   const { user } = useCognitoAuth();
   const [appointments, setAppointments] = useState([]);
   const [showBooking, setShowBooking] = useState(false);
+  const [payingAppointment, setPayingAppointment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [records, setRecords] = useState([]);
   const [recordsLoading, setRecordsLoading] = useState(false);
@@ -59,24 +61,8 @@ export default function PatientDashboard() {
     }
   };
 
-  const handlePay = async (appointment) => {
-    try {
-      const patientId = appointment.patient_id;
-      const res = await paymentAPI.createOrder({
-        appointment_id: appointment.id,
-        patient_id: patientId,
-        amount: appointment.price || '100.00',
-        currency: 'PLN',
-        description: `Wizyta ${appointment.scheduled_start ? new Date(appointment.scheduled_start).toLocaleDateString('pl-PL') : ''}`,
-      });
-      const redirect = res?.data?.redirect_url;
-      if (redirect) {
-        window.location.href = redirect;
-      }
-    } catch (err) {
-      console.error('Payment initiation failed:', err);
-      window.alert('Nie udało się zainicjować płatności. Spróbuj ponownie.');
-    }
+  const handlePay = (appointment) => {
+    setPayingAppointment(appointment);
   };
 
   const handleCancelAppointment = async (appointmentId, reason) => {
@@ -154,6 +140,14 @@ export default function PatientDashboard() {
 
       {showBooking && (
         <BookAppointmentModal onClose={() => setShowBooking(false)} onSuccess={handleAppointmentCreated} />
+      )}
+
+      {payingAppointment && (
+        <PaymentModal
+          appointment={payingAppointment}
+          onClose={() => setPayingAppointment(null)}
+          onSuccess={loadAppointments}
+        />
       )}
     </div>
   );

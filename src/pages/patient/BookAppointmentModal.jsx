@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCognitoAuth } from '../../CognitoAuthContext';
-import { appointmentAPI, scheduleAPI, doctorAPI, facilityAPI, paymentAPI } from '../../api';
+import { appointmentAPI, scheduleAPI, doctorAPI, facilityAPI } from '../../api';
+import PaymentModal from '../../components/PaymentModal';
 import '../../styles/patient/BookAppointmentModal.css';
 
 const asList = (data) => (Array.isArray(data) ? data : (data?.results || []));
@@ -21,6 +22,7 @@ export default function BookAppointmentModal({ onClose, onSuccess, patients = nu
   const staffMode = Array.isArray(patients);
   const [selectedPatient, setSelectedPatient] = useState('');
   const [formData, setFormData] = useState({ slot_id: '', notes: '' });
+  const [paymentAppointment, setPaymentAppointment] = useState(null);
   const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedDate, setSelectedDate] = useState('');
@@ -145,20 +147,16 @@ export default function BookAppointmentModal({ onClose, onSuccess, patients = nu
 
       const appointmentId = apptRes?.data?.id;
 
-      // Step 2: initiate payment in payment-service — response contains PayU redirect URL
+      // Step 2: open PaymentModal for card payment (only for patients, not staff)
       if (appointmentId && !staffMode) {
-        const payRes = await paymentAPI.createOrder({
-          appointment_id: appointmentId,
+        setPaymentAppointment({
+          id: appointmentId,
           patient_id: patientId,
-          amount: selectedSlot.price || '100.00',
-          currency: 'PLN',
-          description: `Wizyta u Dr ${selectedDoctor.first_name} ${selectedDoctor.last_name}`,
+          price: selectedSlot.price || '100.00',
+          scheduled_start: selectedSlot.start_time,
+          doctor_name: `Dr ${selectedDoctor.first_name} ${selectedDoctor.last_name}`,
         });
-        const redirect = payRes?.data?.redirect_url;
-        if (redirect) {
-          window.location.href = redirect;
-          return;
-        }
+        return;
       }
 
       setSuccessMessage('Wizyta zarezerwowana!');
@@ -173,6 +171,16 @@ export default function BookAppointmentModal({ onClose, onSuccess, patients = nu
       setLoading(false);
     }
   };
+
+  if (paymentAppointment) {
+    return (
+      <PaymentModal
+        appointment={paymentAppointment}
+        onClose={() => { setPaymentAppointment(null); onClose(); }}
+        onSuccess={() => { setPaymentAppointment(null); onSuccess(); }}
+      />
+    );
+  }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
