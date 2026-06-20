@@ -101,6 +101,15 @@
   background: rgba(231, 76, 60, 0.1);
 }
 
+.btn-complete {
+  color: #27ae60;
+  border-color: #27ae60;
+}
+
+.btn-complete:hover {
+  background: rgba(39, 174, 96, 0.1);
+}
+
 @media (max-width: 768px) {
   .appointments-table {
     font-size: 12px;

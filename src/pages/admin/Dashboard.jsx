@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { userAPI, appointmentAPI, doctorAPI } from '../../api';
+import { userAPI, appointmentAPI, doctorAPI, facilityAPI } from '../../api';
 import UsersList from '../../components/UsersList';
 import CreateUserModal from '../../components/CreateUserModal';
 import AddDoctorModal from '../../components/AddDoctorModal';
+import AddFacilityModal from '../../components/AddFacilityModal';
 import '../../styles/admin/Dashboard.css';
 
 const asList = (data) => (Array.isArray(data) ? data : (data?.results || []));
@@ -11,11 +12,13 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [facilities, setFacilities] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('doctors');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAddDoctor, setShowAddDoctor] = useState(false);
+  const [showAddFacility, setShowAddFacility] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -30,21 +33,33 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchFacilities = async () => {
+    try {
+      const res = await facilityAPI.list();
+      setFacilities(asList(res.data));
+    } catch (e) {
+      console.error('Failed to fetch facilities:', e);
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     // Fetch independently so one failing endpoint doesn't blank the page.
-    const [usersRes, apptRes, docRes] = await Promise.allSettled([
+    const [usersRes, apptRes, docRes, facRes] = await Promise.allSettled([
       userAPI.list(),
       appointmentAPI.list(),
       doctorAPI.adminList(),
+      facilityAPI.list(),
     ]);
 
     const u = usersRes.status === 'fulfilled' ? asList(usersRes.value.data) : [];
     const a = apptRes.status === 'fulfilled' ? asList(apptRes.value.data) : [];
     const d = docRes.status === 'fulfilled' ? asList(docRes.value.data) : [];
+    const f = facRes.status === 'fulfilled' ? asList(facRes.value.data) : [];
     setUsers(u);
     setAppointments(a);
     setDoctors(d);
+    setFacilities(f);
     setStats({
       totalUsers: u.length,
       totalPatients: u.filter((x) => x.role === 'patient').length,
@@ -73,6 +88,7 @@ export default function AdminDashboard() {
 
       <div className="tabs">
         <button className={`tab ${activeTab === 'doctors' ? 'active' : ''}`} onClick={() => setActiveTab('doctors')}>Lekarze</button>
+        <button className={`tab ${activeTab === 'facilities' ? 'active' : ''}`} onClick={() => setActiveTab('facilities')}>Placówki</button>
         <button className={`tab ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Użytkownicy</button>
         <button className={`tab ${activeTab === 'system' ? 'active' : ''}`} onClick={() => setActiveTab('system')}>System</button>
       </div>
@@ -109,6 +125,34 @@ export default function AdminDashboard() {
         </section>
       )}
 
+      {activeTab === 'facilities' && (
+        <section className="users-section">
+          <div className="section-header">
+            <h2>Placówki ({facilities.length})</h2>
+            <button className="btn-primary" onClick={() => setShowAddFacility(true)}>+ Dodaj placówkę</button>
+          </div>
+          {loading ? (
+            <p>Ładowanie...</p>
+          ) : facilities.length > 0 ? (
+            <div className="users-grid">
+              {facilities.map((f) => (
+                <div key={f.id} className="user-card">
+                  <div className="user-avatar">🏥</div>
+                  <div className="user-info">
+                    <h3>{f.name}</h3>
+                    <p className="user-email">{f.address}{f.city ? `, ${f.city}` : ''}</p>
+                    {f.phone && <p className="user-email">📞 {f.phone}</p>}
+                    {f.email && <p className="user-email">✉️ {f.email}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="no-data">Brak placówek. Dodaj pierwszą.</p>
+          )}
+        </section>
+      )}
+
       {activeTab === 'users' && (
         <section className="users-section">
           <div className="section-header">
@@ -139,6 +183,9 @@ export default function AdminDashboard() {
       )}
       {showAddDoctor && (
         <AddDoctorModal onClose={() => setShowAddDoctor(false)} onSuccess={() => { setShowAddDoctor(false); fetchDoctors(); }} />
+      )}
+      {showAddFacility && (
+        <AddFacilityModal onClose={() => setShowAddFacility(false)} onSuccess={() => { setShowAddFacility(false); fetchFacilities(); }} />
       )}
     </div>
   );

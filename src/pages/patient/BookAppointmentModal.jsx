@@ -14,8 +14,12 @@ const getPatientId = () => {
   } catch { return null; }
 };
 
-export default function BookAppointmentModal({ onClose, onSuccess }) {
+// `patients` (optional) switches the modal into receptionist mode: a patient selector
+// appears and the visit is booked on the chosen patient's behalf (VisitRegistrationClerk).
+export default function BookAppointmentModal({ onClose, onSuccess, patients = null }) {
   const { user } = useCognitoAuth();
+  const staffMode = Array.isArray(patients);
+  const [selectedPatient, setSelectedPatient] = useState('');
   const [formData, setFormData] = useState({ slot_id: '', notes: '' });
   const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -107,10 +111,11 @@ export default function BookAppointmentModal({ onClose, onSuccess }) {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
+    if (staffMode && !selectedPatient) { setError('Wybierz pacjenta.'); return; }
     if (!selectedDoctor) { setError('Wybierz lekarza.'); return; }
     if (!formData.slot_id || !selectedSlot) { setError('Wybierz termin.'); return; }
 
-    const patientId = getPatientId();
+    const patientId = staffMode ? selectedPatient : getPatientId();
     if (!patientId) { setError('Nie można odczytać ID pacjenta — zaloguj się ponownie.'); return; }
 
     setLoading(true);
@@ -118,7 +123,7 @@ export default function BookAppointmentModal({ onClose, onSuccess }) {
       const facilityId = selectedSlot.facility_id &&
         selectedSlot.facility_id !== '00000000-0000-0000-0000-000000000000'
         ? selectedSlot.facility_id : null;
-      await appointmentAPI.create({
+      const res = await appointmentAPI.create({
         slot_id: selectedSlot.id,
         patient_id: patientId,
         doctor_id: selectedSlot.doctor_id,
@@ -127,6 +132,12 @@ export default function BookAppointmentModal({ onClose, onSuccess }) {
         scheduled_end: selectedSlot.end_time,
         notes: formData.notes,
       });
+      // When online payments are enabled the backend returns a PayU redirect.
+      const redirect = res?.data?.redirect_url;
+      if (redirect) {
+        window.location.href = redirect;
+        return;
+      }
       setSuccessMessage('Wizyta zarezerwowana!');
       setTimeout(() => onSuccess(), 1000);
     } catch (err) {
@@ -151,6 +162,25 @@ export default function BookAppointmentModal({ onClose, onSuccess }) {
         <form onSubmit={handleSubmit} className="booking-form">
           {error && <div className="error-message">{error}</div>}
           {successMessage && <div className="success-message">{successMessage}</div>}
+
+          {/* Receptionist mode: choose the patient the visit is booked for. */}
+          {staffMode && (
+            <div className="form-group">
+              <label htmlFor="patient">Pacjent</label>
+              <select
+                id="patient"
+                value={selectedPatient}
+                onChange={(e) => setSelectedPatient(e.target.value)}
+              >
+                <option value="">-- Wybierz pacjenta --</option>
+                {patients.map((p) => (
+                  <option key={p.id} value={p.cognito_sub || p.id}>
+                    {p.first_name} {p.last_name} ({p.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Step 1: find & pick a doctor */}
           {!selectedDoctor && (

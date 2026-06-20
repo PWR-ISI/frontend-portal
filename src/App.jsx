@@ -6,6 +6,7 @@ import PatientDashboard from './pages/patient/Dashboard';
 import DoctorDashboard from './pages/doctor/Dashboard';
 import StaffDashboard from './pages/staff/Dashboard';
 import AdminDashboard from './pages/admin/Dashboard';
+import PaymentReturn from './pages/patient/PaymentReturn';
 import Layout from './components/Layout';
 import './App.css';
 
@@ -34,6 +35,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/payment/return" element={<PaymentReturn />} />
 
       <Route
         path="/patient/*"

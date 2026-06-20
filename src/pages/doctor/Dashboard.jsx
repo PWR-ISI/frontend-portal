@@ -43,8 +43,26 @@ export default function DoctorDashboard() {
     setLoading(false);
   };
 
-  const scheduled = appointments.filter((a) => a.status === 'scheduled');
-  const todayAppointments = scheduled.filter(
+  const handleCancel = async (id, reason) => {
+    try {
+      await appointmentAPI.cancel(id, reason);
+      fetchData();
+    } catch (err) {
+      console.error('Cancel failed:', err);
+    }
+  };
+
+  const handleComplete = async (id, summary) => {
+    try {
+      await appointmentAPI.complete(id, summary);
+      fetchData();
+    } catch (err) {
+      console.error('Complete failed:', err);
+    }
+  };
+
+  const active = appointments.filter((a) => ['scheduled', 'paid'].includes(a.status));
+  const todayAppointments = active.filter(
     (a) => new Date(a.appointment_date).toDateString() === new Date().toDateString()
   );
 
@@ -75,18 +93,18 @@ export default function DoctorDashboard() {
         {loading ? (
           <p>Ładowanie...</p>
         ) : todayAppointments.length > 0 ? (
-          <AppointmentsList appointments={todayAppointments} />
+          <AppointmentsList appointments={todayAppointments} onCancel={handleCancel} onComplete={handleComplete} />
         ) : (
           <p className="no-appointments">Brak wizyt zaplanowanych na dziś</p>
         )}
       </section>
 
       <section className="upcoming-appointments">
-        <h2>Nadchodzące wizyty ({scheduled.length})</h2>
+        <h2>Nadchodzące wizyty ({active.length})</h2>
         {loading ? (
           <p>Ładowanie...</p>
-        ) : scheduled.length > 0 ? (
-          <AppointmentsList appointments={scheduled} />
+        ) : active.length > 0 ? (
+          <AppointmentsList appointments={active} onCancel={handleCancel} onComplete={handleComplete} />
         ) : (
           <p className="no-appointments">Brak nadchodzących wizyt</p>
         )}

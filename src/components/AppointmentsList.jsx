@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import '../styles/components/AppointmentsList.css';
 
-// Map appointment-service statuses to friendly Polish labels.
+// Map appointment statuses to friendly Polish labels.
 const STATUS_LABELS = {
   paid: 'Potwierdzona',
   pending_payment: 'Oczekuje na płatność',
@@ -42,6 +42,12 @@ function AppointmentDetailModal({ appointment, onClose }) {
           {appointment.notes && (
             <div><strong>Notatki:</strong> {appointment.notes}</div>
           )}
+          {appointment.visit_summary && (
+            <div><strong>Podsumowanie wizyty:</strong> {appointment.visit_summary}</div>
+          )}
+          {appointment.cancellation_reason && (
+            <div><strong>Powód odwołania:</strong> {appointment.cancellation_reason}</div>
+          )}
 
           <div style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.25rem' }}>
             ID: {appointment.id}
@@ -55,8 +61,56 @@ function AppointmentDetailModal({ appointment, onClose }) {
   );
 }
 
-export default function AppointmentsList({ appointments, onCancel }) {
+// Prompt for a cancel reason or a post-visit summary before running the action.
+function ActionModal({ action, onClose, onConfirm }) {
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const isCancel = action.type === 'cancel';
+
+  const submit = async () => {
+    setBusy(true);
+    try {
+      await onConfirm(action.appointment.id, text);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+        <div className="modal-header">
+          <h2>{isCancel ? 'Odwołaj wizytę' : 'Zakończ wizytę'}</h2>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-body" style={{ padding: '1.5rem' }}>
+          <div className="form-group">
+            <label htmlFor="action-text">
+              {isCancel ? 'Powód odwołania (opcjonalnie)' : 'Podsumowanie wizyty (opcjonalnie)'}
+            </label>
+            <textarea
+              id="action-text"
+              rows="4"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={isCancel ? 'np. Pacjent poprosił o zmianę terminu' : 'np. Zalecenia, rozpoznanie, dalsze kroki'}
+            />
+          </div>
+        </div>
+        <div className="modal-footer" style={{ padding: '1rem', textAlign: 'right', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <button className="btn btn-secondary" onClick={onClose} disabled={busy}>Anuluj</button>
+          <button className={`btn ${isCancel ? 'btn-cancel' : 'btn-primary'}`} onClick={submit} disabled={busy}>
+            {busy ? 'Przetwarzanie...' : (isCancel ? 'Odwołaj wizytę' : 'Zakończ wizytę')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function AppointmentsList({ appointments, onCancel, onComplete }) {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [action, setAction] = useState(null); // { type: 'cancel'|'complete', appointment }
 
   const formatDate = (dateString) =>
     dateString ? new Date(dateString).toLocaleDateString('pl-PL', {
@@ -66,6 +120,13 @@ export default function AppointmentsList({ appointments, onCancel }) {
 
   const getStatusClass = (status) => `status ${(status || '').toLowerCase()}`;
   const canCancel = (s) => s === 'scheduled' || s === 'paid' || s === 'pending_payment';
+  const canComplete = (s) => s === 'scheduled' || s === 'paid';
+
+  const runAction = async (id, text) => {
+    const handler = action.type === 'cancel' ? onCancel : onComplete;
+    setAction(null);
+    if (handler) await handler(id, text);
+  };
 
   return (
     <>
@@ -98,8 +159,13 @@ export default function AppointmentsList({ appointments, onCancel }) {
                     <button className="btn-action btn-view" onClick={() => setSelectedAppointment(appointment)}>
                       Szczegóły
                     </button>
-                    {canCancel(appointment.status) && (
-                      <button className="btn-action btn-cancel" onClick={() => onCancel && onCancel(appointment.id)}>
+                    {onComplete && canComplete(appointment.status) && (
+                      <button className="btn-action btn-complete" onClick={() => setAction({ type: 'complete', appointment })}>
+                        Zakończ
+                      </button>
+                    )}
+                    {onCancel && canCancel(appointment.status) && (
+                      <button className="btn-action btn-cancel" onClick={() => setAction({ type: 'cancel', appointment })}>
                         Odwołaj
                       </button>
                     )}
@@ -116,6 +182,9 @@ export default function AppointmentsList({ appointments, onCancel }) {
           appointment={selectedAppointment}
           onClose={() => setSelectedAppointment(null)}
         />
+      )}
+      {action && (
+        <ActionModal action={action} onClose={() => setAction(null)} onConfirm={runAction} />
       )}
     </>
   );

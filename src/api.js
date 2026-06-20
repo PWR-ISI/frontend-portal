@@ -57,7 +57,11 @@ export const appointmentAPI = {
     if (data.notes) payload.notes = data.notes;
     return scheduleApi.post('/api/v1/appointments', payload);
   },
-  cancel: (id) => scheduleApi.post(`/api/v1/appointments/${id}/cancel`),
+  // Cancel (patient/doctor/clerk). Optional reason recorded + sent in the notification.
+  cancel: (id, reason = '') => scheduleApi.post(`/api/v1/appointments/${id}/cancel`, { reason }),
+  // Finish a visit (doctor/clerk) with an optional post-visit summary.
+  complete: (id, visit_summary = '') =>
+    scheduleApi.post(`/api/v1/appointments/${id}/complete`, { visit_summary }),
 };
 
 export const scheduleAPI = {
@@ -82,6 +86,8 @@ export const doctorAPI = {
 
 export const facilityAPI = {
   list: () => facilityApi.get('/api/v2/facilities/'),
+  // Admin registers a new facility (FacilityRegistration).
+  create: (data) => facilityApi.post('/api/v2/facilities/', data),
 };
 
 // Admin account provisioning lives in auth-identity-service.

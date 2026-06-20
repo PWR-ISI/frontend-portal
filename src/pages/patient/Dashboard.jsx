@@ -59,14 +59,12 @@ export default function PatientDashboard() {
     }
   };
 
-  const handleCancelAppointment = async (appointmentId) => {
-    if (window.confirm('Czy na pewno chcesz odwołać tę wizytę?')) {
-      try {
-        await appointmentAPI.cancel(appointmentId);
-        loadAppointments();
-      } catch (error) {
-        console.error('Failed to cancel appointment:', error);
-      }
+  const handleCancelAppointment = async (appointmentId, reason) => {
+    try {
+      await appointmentAPI.cancel(appointmentId, reason);
+      loadAppointments();
+    } catch (error) {
+      console.error('Failed to cancel appointment:', error);
     }
   };
 
