@@ -12,7 +12,7 @@ const createServiceApi = (baseURL) => {
   const instance = axios.create({
     baseURL,
     headers: { 'Content-Type': 'application/json' },
-    timeout: 10000,
+    timeout: 30000,
   });
 
   instance.interceptors.request.use((config) => {
