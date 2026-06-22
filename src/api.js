@@ -3,6 +3,7 @@ import { jwtDecode } from 'jwt-decode';
 
 const SCHEDULE_SERVICE_URL = import.meta.env.VITE_SCHEDULE_SERVICE_URL || 'http://localhost:8001';
 const AUTH_SERVICE_URL = import.meta.env.VITE_AUTH_SERVICE_URL || 'http://localhost:8001/api/v2';
+const APPOINTMENT_LAMBDA_URL = import.meta.env.VITE_APPOINTMENT_LAMBDA_URL || 'http://localhost:8002';
 const FACILITY_SERVICE_URL = import.meta.env.VITE_FACILITY_SERVICE_URL || 'http://localhost:8004';
 const MEDICAL_RECORD_SERVICE_URL = import.meta.env.VITE_MEDICAL_RECORD_SERVICE_URL || 'http://localhost:8005';
 const NOTIFICATION_SERVICE_URL = import.meta.env.VITE_NOTIFICATION_SERVICE_URL || 'http://localhost:8006';
@@ -37,6 +38,7 @@ const createServiceApi = (baseURL) => {
 };
 
 const scheduleApi = createServiceApi(SCHEDULE_SERVICE_URL);
+const appointmentLambdaApi = createServiceApi(APPOINTMENT_LAMBDA_URL);
 const authApi = createServiceApi(AUTH_SERVICE_URL);
 const facilityApi = createServiceApi(FACILITY_SERVICE_URL);
 const medicalRecordApi = createServiceApi(MEDICAL_RECORD_SERVICE_URL);
@@ -158,6 +160,21 @@ export const notificationAPI = {
   unreadCount: () => notificationApi.get('/api/v2/notifications/unread_count/'),
   markRead: (id) => notificationApi.put(`/api/v2/notifications/${id}/read/`),
   markAllRead: () => notificationApi.put('/api/v2/notifications/mark_all_as_read/'),
+};
+
+// Clinical appointment operations routed to Lambda (replaces appointment-service ECS).
+// Booking/slots remain on schedule-service via appointmentAPI above.
+export const clinicalAPI = {
+  list:     (params) => appointmentLambdaApi.get('/appointments', { params }),
+  get:      (id) => appointmentLambdaApi.get(`/appointments/${id}`),
+  create:   (data) => appointmentLambdaApi.post('/appointments', data),
+  update:   (id, data) => appointmentLambdaApi.put(`/appointments/${id}`, data),
+  cancel:   (id, data) => appointmentLambdaApi.post(`/appointments/${id}/cancel`, data),
+  complete: (id) => appointmentLambdaApi.post(`/appointments/${id}/complete`),
+  getNotes: (id) => appointmentLambdaApi.get(`/appointments/${id}/notes`),
+  updateNotes: (id, data) => appointmentLambdaApi.put(`/appointments/${id}/notes`, data),
+  history:  (id) => appointmentLambdaApi.get(`/appointments/${id}/history`),
+  upcoming: (patientId) => appointmentLambdaApi.get('/appointments/upcoming', { params: { patient_id: patientId } }),
 };
 
 export const paymentAPI = {
